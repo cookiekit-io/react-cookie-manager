@@ -33,6 +33,12 @@ const DEFAULT_TRANSLATIONS: FullTranslationObject = {
   manageCookiesStatusDeclined: "Declined",
   manageCancelButtonText: "Cancel",
   manageSaveButtonText: "Save Preferences",
+  blockedContentTitle: "Content Blocked",
+  blockedContentMessage:
+    "This content requires cookies that are currently blocked by your privacy settings. This embedded content may track your activity.",
+  blockedContentRefreshMessage:
+    "After accepting cookies, please refresh the page to view this content.",
+  blockedContentButtonText: "Manage Cookie Settings",
 };
 
 function getTranslationValue(

@@ -21,7 +21,7 @@ const ManageConsent = React.lazy(() =>
 );
 import { getBlockedHosts, getBlockedKeywords } from "../utils/tracker-utils";
 import { createTFunction } from "../utils/translations";
-import { CookieBlockingManager, setBlockingEnabled, unblockPreviouslyBlockedContent } from "../utils/cookie-blocking";
+import { CookieBlockingManager, setBlockingEnabled, setContentBlockerTranslations, unblockPreviouslyBlockedContent } from "../utils/cookie-blocking";
 import { setCookie, getCookie, deleteCookie } from "../utils/cookie-utils";
 import {
   generateSessionId,
@@ -209,6 +209,11 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
     () => createTFunction(translations, translationI18NextPrefix),
     [translations, translationI18NextPrefix]
   );
+
+  // Set the translation function for the content blocker
+  useEffect(() => {
+    setContentBlockerTranslations(tFunction);
+  }, [tFunction]);
 
   const [detailedConsent, setDetailedConsent] =
     useState<DetailedCookieConsent | null>(() => {

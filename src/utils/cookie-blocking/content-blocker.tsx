@@ -2,8 +2,20 @@
  * Handles blocking of tracking scripts and iframes, replacing them with placeholders
  */
 
+import type { TFunction } from "../translations";
+
 // Global toggle to enable/disable blocking logic at runtime
 let blockingEnabled = true;
+
+// Global translation function
+let globalTFunction: TFunction | null = null;
+
+/**
+ * Sets the translation function to be used by the content blocker
+ */
+export const setContentBlockerTranslations = (tFunction: TFunction): void => {
+  globalTFunction = tFunction;
+};
 
 /**
  * Enables or disables DOM-level content blocking immediately.
@@ -50,14 +62,28 @@ const applyWrapperStyles = (
  * @returns HTML string for the placeholder content
  */
 const createPlaceholderContent = (placeholderId: string): string => {
+  // Use translations if available, otherwise fall back to English
+  const title = globalTFunction
+    ? globalTFunction("blockedContentTitle")
+    : "Content Blocked";
+  const message = globalTFunction
+    ? globalTFunction("blockedContentMessage")
+    : "This content requires cookies that are currently blocked by your privacy settings. This embedded content may track your activity.";
+  const refreshMessage = globalTFunction
+    ? globalTFunction("blockedContentRefreshMessage")
+    : "After accepting cookies, please refresh the page to view this content.";
+  const buttonText = globalTFunction
+    ? globalTFunction("blockedContentButtonText")
+    : "Manage Cookie Settings";
+
   return `
     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 16px; width: 100%; max-width: 95%; box-sizing: border-box;">
       <div style="margin-bottom: 8px; font-size: 28px;">🔒</div>
-      <h3 style="font-size: 16px; margin: 0 0 8px 0; font-weight: bold; color: white;">Content Blocked</h3>
-      <p style="margin: 0 0 8px 0; font-size: 14px;">This content requires cookies that are currently blocked by your privacy settings. This embedded content may track your activity.</p>
-      <p style="margin: 0 0 8px 0; font-size: 13px; color: #d1d5db;">After accepting cookies, please refresh the page to view this content.</p>
+      <h3 style="font-size: 16px; margin: 0 0 8px 0; font-weight: bold; color: white;">${title}</h3>
+      <p style="margin: 0 0 8px 0; font-size: 14px;">${message}</p>
+      <p style="margin: 0 0 8px 0; font-size: 13px; color: #d1d5db;">${refreshMessage}</p>
       <div id="cookie-settings-${placeholderId}" style="margin-top: 10px; background-color: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: 500; cursor: pointer; font-size: 13px; transition: all 0.2s ease; display: inline-block;">
-        Manage Cookie Settings
+        ${buttonText}
       </div>
     </div>
   `;

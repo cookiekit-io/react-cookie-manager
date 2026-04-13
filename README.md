@@ -152,8 +152,26 @@ When a user hasn't consented to the required cookies, these embeds are replaced 
 - Provide a button to manage cookie settings
 - Inform users to refresh the page after accepting cookies
 - Maintain the same dimensions as the original content
+- **Support full translation/customization** via the `translations` prop
 
 This ensures your site remains GDPR-compliant while providing a seamless user experience.
+
+**Translating Blocked Content Messages:**
+
+You can customize the blocked content placeholder text for different languages using the `translations` prop:
+
+```jsx
+<CookieManager
+  translations={{
+    blockedContentTitle: "Contenido Bloqueado",
+    blockedContentMessage: "Este contenido requiere cookies que están bloqueadas.",
+    blockedContentRefreshMessage: "Actualice la página después de aceptar las cookies.",
+    blockedContentButtonText: "Administrar Cookies"
+  }}
+>
+  <YourApp />
+</CookieManager>
+```
 
 ![React Cookie Manager Styles](https://github.com/hypershiphq/react-cookie-manager/blob/main/assets/banner-styles.jpg?raw=true)
 
@@ -757,7 +775,13 @@ All available translation keys and their default values:
 
   // Buttons in manage modal
   manageCancelButtonText: "Cancel",
-  manageSaveButtonText: "Save Preferences"
+  manageSaveButtonText: "Save Preferences",
+
+  // Blocked content placeholder (for iframes like YouTube, Google Maps, etc.)
+  blockedContentTitle: "Content Blocked",
+  blockedContentMessage: "This content requires cookies that are currently blocked by your privacy settings. This embedded content may track your activity.",
+  blockedContentRefreshMessage: "After accepting cookies, please refresh the page to view this content.",
+  blockedContentButtonText: "Manage Cookie Settings"
 }
 ```
 
@@ -770,6 +794,10 @@ You can override any of these translations by passing them in the `translations`
     message: "We use cookies to improve your experience.",
     buttonText: "Allow All",
     manageButtonText: "Customize",
+    // Translate blocked content placeholders (for YouTube, Google Maps, etc.)
+    blockedContentTitle: "Contenido Bloqueado",
+    blockedContentMessage: "Este contenido requiere cookies que están bloqueadas.",
+    blockedContentButtonText: "Administrar Configuración",
     // ... override any other translations
   }}
 >
@@ -779,40 +807,159 @@ You can override any of these translations by passing them in the `translations`
 
 ### i18next Integration
 
-When using i18next, make sure your translation files include all the keys under your chosen prefix:
+React Cookie Manager seamlessly integrates with i18next for multi-language support. Here's a complete example:
+
+**1. Set up your translation files:**
 
 ```json
+// locales/en/translation.json
 {
   "cookies": {
     "title": "Cookie Settings 🍪",
-    "message": "We use cookies to improve your experience.",
-    "buttonText": "Allow All",
+    "message": "We use cookies to improve your experience and analyze site usage.",
+    "buttonText": "Accept All",
     "declineButtonText": "Decline All",
-    "manageButtonText": "Customize",
+    "manageButtonText": "Manage Preferences",
     "privacyPolicyText": "Privacy Policy",
+    
     "manageTitle": "Cookie Preferences",
-    "manageMessage": "Customize your cookie preferences below...",
-    "manageEssentialTitle": "Essential Cookies"
-    // ... include all other translation keys
+    "manageMessage": "Customize your cookie preferences below. Essential cookies are always enabled.",
+    "manageEssentialTitle": "Essential",
+    "manageEssentialSubtitle": "Required for the website to function properly",
+    "manageAnalyticsTitle": "Analytics",
+    "manageAnalyticsSubtitle": "Help us understand how visitors interact with our website",
+    "manageSocialTitle": "Social Media",
+    "manageSocialSubtitle": "Enable social media features and sharing",
+    "manageAdvertTitle": "Advertising",
+    "manageAdvertSubtitle": "Personalized ads and performance measurement",
+    
+    "manageCancelButtonText": "Cancel",
+    "manageSaveButtonText": "Save Preferences",
+    
+    "blockedContentTitle": "Content Blocked",
+    "blockedContentMessage": "This content requires cookies that are currently blocked. This embedded content may track your activity.",
+    "blockedContentRefreshMessage": "After accepting cookies, please refresh the page to view this content.",
+    "blockedContentButtonText": "Manage Cookie Settings"
+  }
+}
+
+// locales/es/translation.json
+{
+  "cookies": {
+    "title": "Configuración de Cookies 🍪",
+    "message": "Usamos cookies para mejorar tu experiencia y analizar el uso del sitio.",
+    "buttonText": "Aceptar Todo",
+    "declineButtonText": "Rechazar Todo",
+    "manageButtonText": "Gestionar Preferencias",
+    "privacyPolicyText": "Política de Privacidad",
+    
+    "manageTitle": "Preferencias de Cookies",
+    "manageMessage": "Personaliza tus preferencias de cookies. Las cookies esenciales siempre están habilitadas.",
+    "manageEssentialTitle": "Esenciales",
+    "manageEssentialSubtitle": "Necesarias para que el sitio funcione correctamente",
+    "manageAnalyticsTitle": "Análisis",
+    "manageAnalyticsSubtitle": "Ayúdanos a entender cómo los visitantes interactúan con nuestro sitio",
+    "manageSocialTitle": "Redes Sociales",
+    "manageSocialSubtitle": "Habilitar funciones de redes sociales y compartir",
+    "manageAdvertTitle": "Publicidad",
+    "manageAdvertSubtitle": "Anuncios personalizados y medición de rendimiento",
+    
+    "manageCancelButtonText": "Cancelar",
+    "manageSaveButtonText": "Guardar Preferencias",
+    
+    "blockedContentTitle": "Contenido Bloqueado",
+    "blockedContentMessage": "Este contenido requiere cookies que están bloqueadas. Este contenido puede rastrear tu actividad.",
+    "blockedContentRefreshMessage": "Después de aceptar las cookies, actualiza la página para ver este contenido.",
+    "blockedContentButtonText": "Administrar Cookies"
+  }
+}
+
+// locales/fr/translation.json
+{
+  "cookies": {
+    "title": "Paramètres des Cookies 🍪",
+    "message": "Nous utilisons des cookies pour améliorer votre expérience.",
+    "buttonText": "Tout Accepter",
+    "declineButtonText": "Tout Refuser",
+    "manageButtonText": "Gérer les Préférences",
+    "privacyPolicyText": "Politique de Confidentialité",
+    
+    "manageTitle": "Préférences des Cookies",
+    "manageMessage": "Personnalisez vos préférences. Les cookies essentiels sont toujours activés.",
+    "manageEssentialTitle": "Essentiels",
+    "manageEssentialSubtitle": "Nécessaires au fonctionnement du site",
+    "manageAnalyticsTitle": "Analytiques",
+    "manageAnalyticsSubtitle": "Nous aident à comprendre comment les visiteurs interagissent avec notre site",
+    "manageSocialTitle": "Réseaux Sociaux",
+    "manageSocialSubtitle": "Activer les fonctionnalités de partage sur les réseaux sociaux",
+    "manageAdvertTitle": "Publicité",
+    "manageAdvertSubtitle": "Publicités personnalisées et mesure de performance",
+    
+    "manageCancelButtonText": "Annuler",
+    "manageSaveButtonText": "Enregistrer les Préférences",
+    
+    "blockedContentTitle": "Contenu Bloqué",
+    "blockedContentMessage": "Ce contenu nécessite des cookies qui sont actuellement bloqués.",
+    "blockedContentRefreshMessage": "Après avoir accepté les cookies, veuillez actualiser la page.",
+    "blockedContentButtonText": "Gérer les Paramètres des Cookies"
   }
 }
 ```
 
-Then use it with the i18next translation function:
+**2. Use it in your app:**
 
 ```jsx
 import { useTranslation } from "react-i18next";
+import { CookieManager } from "react-cookie-manager";
 
 function App() {
   const { t } = useTranslation();
 
   return (
-    <CookieManager translations={t} translationI18NextPrefix="cookies.">
+    <CookieManager 
+      translations={t} 
+      translationI18NextPrefix="cookies."
+      privacyPolicyUrl="/privacy"
+      showManageButton={true}
+      theme="light"
+    >
       <YourApp />
     </CookieManager>
   );
 }
 ```
+
+**3. Example with language switcher:**
+
+```jsx
+import { useTranslation } from "react-i18next";
+import { CookieManager } from "react-cookie-manager";
+
+function App() {
+  const { t, i18n } = useTranslation();
+
+  return (
+    <>
+      {/* Language switcher */}
+      <div className="language-switcher">
+        <button onClick={() => i18n.changeLanguage('en')}>English</button>
+        <button onClick={() => i18n.changeLanguage('es')}>Español</button>
+        <button onClick={() => i18n.changeLanguage('fr')}>Français</button>
+      </div>
+
+      <CookieManager 
+        translations={t} 
+        translationI18NextPrefix="cookies."
+        privacyPolicyUrl="/privacy"
+      >
+        <YourApp />
+      </CookieManager>
+    </>
+  );
+}
+```
+
+The cookie banner and blocked content messages will automatically update when you change languages!
 
 ## Local Development
 

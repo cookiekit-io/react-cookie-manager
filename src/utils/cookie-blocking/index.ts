@@ -7,6 +7,7 @@ import {
   ensurePlaceholdersVisible,
   createContentPlaceholder,
   setBlockingEnabled,
+  setContentBlockerTranslations,
   unblockPreviouslyBlockedContent,
 } from "./content-blocker";
 
@@ -87,5 +88,6 @@ export {
   ensurePlaceholdersVisible,
   createContentPlaceholder,
   setBlockingEnabled,
+  setContentBlockerTranslations,
   unblockPreviouslyBlockedContent,
 };
