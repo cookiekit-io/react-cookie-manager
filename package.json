@@ -101,30 +101,45 @@
     "@types/node": "^20.17.16",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
-    "@vitejs/plugin-react": "^4.3.4",
-    "@vitest/coverage-v8": "^3.2.4",
+    "@vitejs/plugin-react": "^4.7.0",
+    "@vitest/coverage-v8": "^4.1.8",
     "autoprefixer": "^10.4.17",
     "clsx": "^2.1.1",
-    "cssnano": "^7.0.6",
+    "cssnano": "^8.0.1",
     "jsdom": "^26.1.0",
-    "postcss": "^8.4.35",
+    "postcss": "^8.5.15",
     "postcss-prefix-selector": "^2.1.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "tailwind-merge": "^3.1.0",
     "tailwindcss": "^3.4.1",
     "terser": "^5.37.0",
-    "tsup": "^8.3.5",
     "typescript": "^5.5.2",
-    "vite": "^6.0.3",
+    "vite": "^6.4.3",
     "vite-plugin-css-injected-by-js": "^3.5.2",
     "vite-plugin-dts": "^4.3.0",
     "vite-plugin-lib-inject-css": "^2.2.1",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.8"
   },
   "peerDependencies": {
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "esbuild": ">=0.25.0",
+      "rollup": ">=4.59.0",
+      "postcss": ">=8.5.10",
+      "glob": ">=10.5.0",
+      "minimatch": ">=10.2.1",
+      "ajv": ">=8.18.0",
+      "brace-expansion": ">=2.0.3",
+      "@isaacs/brace-expansion": ">=5.0.1",
+      "picomatch": ">=4.0.4",
+      "yaml": ">=2.8.3",
+      "ws": ">=8.20.1",
+      "lodash": ">=4.17.23"
+    }
   },
   "packageManager": "pnpm@10.11.0+sha512.6540583f41cc5f628eb3d9773ecee802f4f9ef9923cc45b69890fb47991d4b092964694ec3a4f738a420c918a333062c8b925d312f42e4f0c263eb603551f977"
 }

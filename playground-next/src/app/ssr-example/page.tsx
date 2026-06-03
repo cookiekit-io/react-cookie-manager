@@ -5,8 +5,8 @@ import { cookies } from "next/headers";
 
 // Server component - this code runs on the server
 export default async function SSRPage() {
-  // This is server-side code
-  const cookieStore = cookies();
+  // This is server-side code. In Next.js 15 `cookies()` is async.
+  const cookieStore = await cookies();
   const theme = cookieStore.get("theme")?.value || "system";
 
   // Example of server-side data fetching
