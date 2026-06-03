@@ -356,6 +356,7 @@ These are the props for the `CookieManager` component (the main component you sh
 | `onManage`                 | (preferences?: CookieCategories) => void | -                | Callback when preferences are updated     |
 | `onAccept`                 | () => void                               | -                | Callback when all cookies are accepted    |
 | `onDecline`                | () => void                               | -                | Callback when all cookies are declined    |
+| `onConsentLoaded`          | (consent: DetailedCookieConsent \| null) => void | -        | Fires once on mount with consent restored from storage (null if none) |
 | `classNames`               | CookieConsenterClassNames                | -                | Custom class names for styling            |
 | `cookieCategories`         | CookieCategories                         | { Analytics: true, Social: true, Advertising: true } | Which categories to show in Manage UI |
 | `initialPreferences`       | CookieCategories                         | { Analytics: false, Social: false, Advertising: false } | Initial values for categories |
@@ -562,11 +563,26 @@ interface CookieConsentHook {
 
 The CookieManager component provides callback props that allow you to respond to user interactions with the consent UI:
 
-| Callback    | Triggered when                       | Parameters                       |
-| ----------- | ------------------------------------ | -------------------------------- |
-| `onAccept`  | User accepts all cookies             | None                             |
-| `onDecline` | User declines all cookies            | None                             |
-| `onManage`  | User saves custom cookie preferences | `preferences?: CookieCategories` |
+| Callback          | Triggered when                                          | Parameters                              |
+| ----------------- | ------------------------------------------------------- | --------------------------------------- |
+| `onAccept`        | User accepts all cookies                                | None                                    |
+| `onDecline`       | User declines all cookies                               | None                                    |
+| `onManage`        | User saves custom cookie preferences                    | `preferences?: CookieCategories`        |
+| `onConsentLoaded` | Once on mount, with consent restored from storage       | `consent: DetailedCookieConsent \| null` |
+
+> `onConsentLoaded` lets you sync analytics on page load when consent was already given on a previous visit (the interaction callbacks only fire when the user interacts). It receives `null` when no prior consent decision exists.
+
+```jsx
+<CookieManager
+  onConsentLoaded={(consent) => {
+    if (consent?.Analytics.consented) {
+      window.gtag?.("consent", "update", { analytics_storage: "granted" });
+    }
+  }}
+>
+  {children}
+</CookieManager>
+```
 
 ### Usage Example
 
@@ -679,7 +695,15 @@ All available translation keys and their default values:
 
   // Buttons in manage modal
   manageCancelButtonText: "Cancel",
-  manageSaveButtonText: "Save Preferences"
+  manageSaveButtonText: "Save Preferences",
+
+  // Placeholder shown in place of blocked embedded content (e.g. iframes)
+  blockedContentTitle: "Content Blocked",
+  blockedContentMessage:
+    "This content requires cookies that are currently blocked by your privacy settings. This embedded content may track your activity.",
+  blockedContentInstruction:
+    "After accepting cookies, please refresh the page to view this content.",
+  blockedContentButtonText: "Manage Cookie Settings"
 }
 ```
 

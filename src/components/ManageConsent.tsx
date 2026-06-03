@@ -7,6 +7,21 @@ import {
 import { TFunction } from "../utils/translations";
 import { cn } from "../utils/cn";
 
+// Stable module-level defaults so a missing prop doesn't produce a new object
+// identity on every render (which previously caused the resync effect below to
+// fire continuously — see issues #40 and #43).
+const DEFAULT_INITIAL_PREFERENCES: CookieCategories = {
+  Analytics: false,
+  Social: false,
+  Advertising: false,
+};
+
+const DEFAULT_COOKIE_CATEGORIES: CookieCategories = {
+  Analytics: true,
+  Social: true,
+  Advertising: true,
+};
+
 interface ManageConsentProps {
   theme?: "light" | "dark";
   tFunction: TFunction;
@@ -23,25 +38,27 @@ export const ManageConsent: React.FC<ManageConsentProps> = ({
   tFunction,
   onSave,
   onCancel,
-  initialPreferences = {
-    Analytics: false,
-    Social: false,
-    Advertising: false,
-  },
-  cookieCategories = {
-    Analytics: true,
-    Social: true,
-    Advertising: true,
-  },
+  initialPreferences = DEFAULT_INITIAL_PREFERENCES,
+  cookieCategories = DEFAULT_COOKIE_CATEGORIES,
   detailedConsent,
   classNames,
 }) => {
   const [consent, setConsent] = useState<CookieCategories>(initialPreferences);
 
-  // Keep local state in sync if initialPreferences prop changes
+  // Keep local state in sync if initialPreferences actually change. Depend on
+  // the primitive values rather than the object identity so a freshly-created
+  // object each render does not retrigger the effect (issues #40 and #43).
   useEffect(() => {
-    setConsent(initialPreferences);
-  }, [initialPreferences]);
+    setConsent({
+      Analytics: initialPreferences.Analytics,
+      Social: initialPreferences.Social,
+      Advertising: initialPreferences.Advertising,
+    });
+  }, [
+    initialPreferences.Analytics,
+    initialPreferences.Social,
+    initialPreferences.Advertising,
+  ]);
 
   const handleToggle = (category: keyof CookieCategories) => {
     setConsent((prev) => ({

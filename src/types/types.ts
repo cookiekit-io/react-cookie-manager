@@ -162,7 +162,27 @@ export type TranslationKey =
    * Text for save button in manage cookies view
    * @default 'Save Preferences'
    */
-  | "manageSaveButtonText";
+  | "manageSaveButtonText"
+  /**
+   * Title shown in the placeholder that replaces blocked embedded content (e.g. iframes)
+   * @default 'Content Blocked'
+   */
+  | "blockedContentTitle"
+  /**
+   * Description shown in the blocked embedded content placeholder
+   * @default 'This content requires cookies that are currently blocked by your privacy settings. This embedded content may track your activity.'
+   */
+  | "blockedContentMessage"
+  /**
+   * Instruction shown in the blocked embedded content placeholder
+   * @default 'After accepting cookies, please refresh the page to view this content.'
+   */
+  | "blockedContentInstruction"
+  /**
+   * Button label shown in the blocked embedded content placeholder
+   * @default 'Manage Cookie Settings'
+   */
+  | "blockedContentButtonText";
 
 export type FullTranslationObject = Record<TranslationKey, string>;
 

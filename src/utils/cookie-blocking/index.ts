@@ -7,8 +7,10 @@ import {
   ensurePlaceholdersVisible,
   createContentPlaceholder,
   setBlockingEnabled,
+  setBlockingTranslationFunction,
   unblockPreviouslyBlockedContent,
 } from "./content-blocker";
+import type { TFunction } from "../translations";
 
 /**
  * Main cookie blocking manager that handles all aspects of cookie blocking
@@ -21,8 +23,16 @@ export class CookieBlockingManager {
    * Initializes cookie blocking based on user preferences
    * @param blockedHosts Array of hosts to block
    * @param blockedKeywords Array of keywords to block in scripts and iframes
+   * @param tFunction Optional translation function for the blocked-content placeholder
    */
-  public initialize(blockedHosts: string[], blockedKeywords: string[]): void {
+  public initialize(
+    blockedHosts: string[],
+    blockedKeywords: string[],
+    tFunction?: TFunction
+  ): void {
+    // Make the translation function available to the placeholder renderer
+    setBlockingTranslationFunction(tFunction ?? null);
+
     // Replace any existing observers/intervals to avoid stale keyword sets
     if (this.observerRef) {
       this.observerRef.disconnect();
@@ -87,5 +97,6 @@ export {
   ensurePlaceholdersVisible,
   createContentPlaceholder,
   setBlockingEnabled,
+  setBlockingTranslationFunction,
   unblockPreviouslyBlockedContent,
 };

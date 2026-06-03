@@ -46,6 +46,13 @@ export interface CookieManagerProps
   onManage?: (preferences?: CookieCategories) => void;
   onAccept?: () => void;
   onDecline?: () => void;
+  /**
+   * Called once on mount with the consent state restored from storage.
+   * Receives the persisted `DetailedCookieConsent`, or `null` when no prior
+   * consent decision exists. Useful for syncing analytics (e.g. gtag consent
+   * mode) on load without waiting for the user to interact (issue #42).
+   */
+  onConsentLoaded?: (consent: DetailedCookieConsent | null) => void;
   disableAutomaticBlocking?: boolean;
   blockedDomains?: string[];
   expirationDays?: number;
@@ -138,6 +145,7 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
   onManage,
   onAccept,
   onDecline,
+  onConsentLoaded,
   disableAutomaticBlocking = false,
   blockedDomains = [],
   expirationDays = 365,
@@ -205,6 +213,18 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
   // Use the CookieBlockingManager
   const cookieBlockingManager = useRef<CookieBlockingManager | null>(null);
 
+  // Fire onConsentLoaded exactly once on mount with the consent restored from
+  // storage (null when there is no prior decision). Lets consumers sync their
+  // analytics on load without waiting for user interaction (issue #42).
+  const consentLoadedFiredRef = useRef(false);
+  useEffect(() => {
+    if (consentLoadedFiredRef.current) return;
+    consentLoadedFiredRef.current = true;
+    onConsentLoaded?.(detailedConsent);
+    // Intentionally run once on mount with the initial persisted value.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     // Show banner if no consent decision has been made AND manage consent is not shown
     if (detailedConsent === null && !showManageConsent) {
@@ -244,7 +264,7 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
         }
 
         // Initialize the manager with current blocked hosts and keywords
-        cookieBlockingManager.current.initialize(blockedHosts, blockedKeywords);
+        cookieBlockingManager.current.initialize(blockedHosts, blockedKeywords, tFunction);
 
         // Proactively restore any previously blocked iframes that are now permitted
         unblockPreviouslyBlockedContent(blockedKeywords);
@@ -393,7 +413,7 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
         if (!cookieBlockingManager.current) {
           cookieBlockingManager.current = new CookieBlockingManager();
         }
-        cookieBlockingManager.current.initialize(blockedHosts, blockedKeywords);
+        cookieBlockingManager.current.initialize(blockedHosts, blockedKeywords, tFunction);
         // Ensure we restore any content that is now permitted
         unblockPreviouslyBlockedContent(blockedKeywords);
       } else {

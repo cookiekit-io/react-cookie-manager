@@ -2,8 +2,43 @@
  * Handles blocking of tracking scripts and iframes, replacing them with placeholders
  */
 
+import type { TFunction } from "../translations";
+
 // Global toggle to enable/disable blocking logic at runtime
 let blockingEnabled = true;
+
+// Translation function used to localize the blocked-content placeholder.
+// Set when blocking is (re)initialized; falls back to English defaults when
+// unset (e.g. content blocked before the provider mounts). See issue #39.
+let translate: TFunction | null = null;
+
+/**
+ * Sets the translation function used by the blocked-content placeholder.
+ */
+export const setBlockingTranslationFunction = (t: TFunction | null): void => {
+  translate = t;
+};
+
+// English fallbacks, kept in sync with DEFAULT_TRANSLATIONS, used when no
+// translation function has been provided.
+const PLACEHOLDER_FALLBACKS = {
+  blockedContentTitle: "Content Blocked",
+  blockedContentMessage:
+    "This content requires cookies that are currently blocked by your privacy settings. This embedded content may track your activity.",
+  blockedContentInstruction:
+    "After accepting cookies, please refresh the page to view this content.",
+  blockedContentButtonText: "Manage Cookie Settings",
+} as const;
+
+const tr = (key: keyof typeof PLACEHOLDER_FALLBACKS): string =>
+  translate ? translate(key) : PLACEHOLDER_FALLBACKS[key];
+
+const escapeHtml = (value: string): string =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 
 /**
  * Enables or disables DOM-level content blocking immediately.
@@ -51,13 +86,19 @@ const applyWrapperStyles = (
  */
 const createPlaceholderContent = (placeholderId: string): string => {
   return `
-    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 16px; width: 100%; max-width: 95%; box-sizing: border-box;">
+    <div class="cookie-consent-blocked-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 16px; width: 100%; max-width: 95%; box-sizing: border-box;">
       <div style="margin-bottom: 8px; font-size: 28px;">🔒</div>
-      <h3 style="font-size: 16px; margin: 0 0 8px 0; font-weight: bold; color: white;">Content Blocked</h3>
-      <p style="margin: 0 0 8px 0; font-size: 14px;">This content requires cookies that are currently blocked by your privacy settings. This embedded content may track your activity.</p>
-      <p style="margin: 0 0 8px 0; font-size: 13px; color: #d1d5db;">After accepting cookies, please refresh the page to view this content.</p>
+      <h3 style="font-size: 16px; margin: 0 0 8px 0; font-weight: bold; color: white;">${escapeHtml(
+        tr("blockedContentTitle")
+      )}</h3>
+      <p style="margin: 0 0 8px 0; font-size: 14px;">${escapeHtml(
+        tr("blockedContentMessage")
+      )}</p>
+      <p style="margin: 0 0 8px 0; font-size: 13px; color: #d1d5db;">${escapeHtml(
+        tr("blockedContentInstruction")
+      )}</p>
       <div id="cookie-settings-${placeholderId}" style="margin-top: 10px; background-color: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: 500; cursor: pointer; font-size: 13px; transition: all 0.2s ease; display: inline-block;">
-        Manage Cookie Settings
+        ${escapeHtml(tr("blockedContentButtonText"))}
       </div>
     </div>
   `;
@@ -265,7 +306,7 @@ export const ensurePlaceholdersVisible = (): void => {
           // Check if we already have content in the wrapper
           const hasContent =
             (wrapper as HTMLElement).querySelector(".cookie-consent-wrapper-content") !== null ||
-            (wrapper as HTMLElement).innerHTML.includes("Content Blocked");
+            (wrapper as HTMLElement).querySelector(".cookie-consent-blocked-placeholder") !== null;
 
           // If no content exists, add it directly to the wrapper
           if (!hasContent) {
