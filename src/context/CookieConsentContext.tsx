@@ -23,6 +23,11 @@ import { getBlockedHosts, getBlockedKeywords } from "../utils/tracker-utils";
 import { createTFunction } from "../utils/translations";
 import { CookieBlockingManager, setBlockingEnabled, unblockPreviouslyBlockedContent } from "../utils/cookie-blocking";
 import { setCookie, getCookie, deleteCookie } from "../utils/cookie-utils";
+import {
+  setGoogleConsentDefault,
+  updateGoogleConsent,
+  type GoogleConsentModeOptions,
+} from "../utils/google-consent-mode";
 
 interface CookieConsentContextValue {
   hasConsent: boolean | null;
@@ -53,6 +58,15 @@ export interface CookieManagerProps
    * mode) on load without waiting for the user to interact (issue #42).
    */
   onConsentLoaded?: (consent: DetailedCookieConsent | null) => void;
+  /**
+   * Enable Google Consent Mode v2. When `true`, the library emits a `denied`
+   * default on mount and pushes `gtag('consent','update',...)` whenever consent
+   * changes, mapping Analytics → `analytics_storage`, Advertising →
+   * `ad_storage`/`ad_user_data`/`ad_personalization`, and Social →
+   * `personalization_storage`. Pass an options object to customize the mapping,
+   * defaults, `wait_for_update`, `url_passthrough`, or `ads_data_redaction`.
+   */
+  googleConsentMode?: boolean | GoogleConsentModeOptions;
   disableAutomaticBlocking?: boolean;
   blockedDomains?: string[];
   expirationDays?: number;
@@ -108,6 +122,16 @@ const createDetailedConsent = (consented: boolean): DetailedCookieConsent => ({
   Advertising: createConsentStatus(consented),
 });
 
+// Flatten a DetailedCookieConsent into the boolean shape used for Google
+// Consent Mode mapping.
+const detailedConsentToPrefs = (
+  consent: DetailedCookieConsent
+): CookieCategories => ({
+  Analytics: consent.Analytics.consented,
+  Social: consent.Social.consented,
+  Advertising: consent.Advertising.consented,
+});
+
 // Normalize possibly partial consent loaded from cookie into a full DetailedCookieConsent
 const normalizeDetailedConsent = (raw: any): DetailedCookieConsent => {
   const safeStatus = (status: any, fallbackTs: string) => {
@@ -146,6 +170,7 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
   onAccept,
   onDecline,
   onConsentLoaded,
+  googleConsentMode,
   disableAutomaticBlocking = false,
   blockedDomains = [],
   expirationDays = 365,
@@ -160,6 +185,13 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
     () => createTFunction(translations, translationI18NextPrefix),
     [translations, translationI18NextPrefix]
   );
+
+  // Normalize the googleConsentMode prop into options (or null when disabled).
+  const gcmOptions: GoogleConsentModeOptions | null = googleConsentMode
+    ? googleConsentMode === true
+      ? {}
+      : googleConsentMode
+    : null;
 
   const [detailedConsent, setDetailedConsent] =
     useState<DetailedCookieConsent | null>(() => {
@@ -220,6 +252,16 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
   useEffect(() => {
     if (consentLoadedFiredRef.current) return;
     consentLoadedFiredRef.current = true;
+
+    // Google Consent Mode v2: emit the denied-by-default state, then reflect any
+    // previously stored decision with an immediate update.
+    if (gcmOptions) {
+      setGoogleConsentDefault(gcmOptions);
+      if (detailedConsent) {
+        updateGoogleConsent(detailedConsentToPrefs(detailedConsent), gcmOptions);
+      }
+    }
+
     onConsentLoaded?.(detailedConsent);
     // Intentionally run once on mount with the initial persisted value.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -336,6 +378,18 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
       unblockPreviouslyBlockedContent([]);
     } catch (e) {}
 
+    // Google Consent Mode: grant the categories that are actually offered.
+    if (gcmOptions) {
+      updateGoogleConsent(
+        {
+          Analytics: cookieCategories?.Analytics !== false,
+          Social: cookieCategories?.Social !== false,
+          Advertising: cookieCategories?.Advertising !== false,
+        },
+        gcmOptions
+      );
+    }
+
     // Call the onAccept callback if provided
     if (onAccept) {
       onAccept();
@@ -362,6 +416,14 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
     setIsVisible(false);
     if (enableFloatingButton) {
       setIsFloatingButtonVisible(true);
+    }
+
+    // Google Consent Mode: everything denied.
+    if (gcmOptions) {
+      updateGoogleConsent(
+        { Analytics: false, Social: false, Advertising: false },
+        gcmOptions
+      );
     }
 
     // Call the onDecline callback if provided
@@ -424,6 +486,11 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
         unblockPreviouslyBlockedContent([]);
       }
     } catch (e) {}
+
+    // Google Consent Mode: reflect the saved granular preferences.
+    if (gcmOptions) {
+      updateGoogleConsent(preferences, gcmOptions);
+    }
 
     if (onManage) {
       onManage(preferences);

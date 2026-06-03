@@ -47,6 +47,7 @@ Styles are automatically injected; no manual CSS import is required.
 - [Quick Start](#quick-start)
 - [Features](#features)
 - [Automatically Disable Tracking](#automatically-disable-tracking)
+- [Google Consent Mode v2](#google-consent-mode-v2)
 - [Installation](#installation)
 - [Basic Usage](#basic-usage)
 - [Next.js Usage](#nextjs-usage)
@@ -102,6 +103,68 @@ When a user hasn't consented to the required cookies, these embeds are replaced 
 - Maintain the same dimensions as the original content
 
 This ensures your site remains GDPR-compliant while providing a seamless user experience.
+
+## Google Consent Mode v2
+
+If you use Google Analytics 4 or Google Ads, enable [Google Consent Mode v2](https://developers.google.com/tag-platform/security/guides/consent) with a single prop. The library emits a `denied`-by-default state on mount and pushes a `gtag('consent', 'update', …)` whenever the user accepts, declines, or saves preferences — no manual wiring required.
+
+```jsx
+import { CookieManager } from "react-cookie-manager";
+
+<CookieManager googleConsentMode>
+  <App />
+</CookieManager>;
+
+// or with options
+<CookieManager
+  googleConsentMode={{
+    waitForUpdate: 500, // ms Google waits for an update before pinging (default 500)
+    urlPassthrough: true, // gtag('set', 'url_passthrough', true)
+    adsDataRedaction: true, // gtag('set', 'ads_data_redaction', true)
+  }}
+>
+  <App />
+</CookieManager>;
+```
+
+### How categories map to Google signals
+
+| Google signal             | Cookie category    |
+| ------------------------- | ------------------ |
+| `analytics_storage`       | Analytics          |
+| `ad_storage`              | Advertising        |
+| `ad_user_data`            | Advertising        |
+| `ad_personalization`      | Advertising        |
+| `personalization_storage` | Social             |
+| `functionality_storage`   | always `granted`   |
+| `security_storage`        | always `granted`   |
+
+A category that is hidden (via `cookieCategories`) or not consented maps to `denied`. Override any mapping or default with the options object:
+
+```jsx
+<CookieManager
+  googleConsentMode={{
+    mapping: { personalization_storage: "Advertising" },
+    defaults: { analytics_storage: "granted" },
+  }}
+>
+```
+
+### Loading the default before Google tags (strict ordering)
+
+Consent Mode prefers the `default` command to run **before** the Google tag loads. Since the React provider mounts after `<head>` scripts, all commands are pushed to `window.dataLayer` (so Google still applies them, and `wait_for_update` covers the gap). For strict ordering, call the exported helper in `<head>` before your gtag snippet, then keep the `googleConsentMode` prop for updates:
+
+```html
+<script>
+  // before the gtag.js snippet
+</script>
+<script type="module">
+  import { setGoogleConsentDefault } from "react-cookie-manager";
+  setGoogleConsentDefault();
+</script>
+```
+
+The exported `updateGoogleConsent(preferences, options?)` and `mapConsentToSignals(preferences, options?)` helpers are available for fully manual control as well.
 
 ## Basic Usage
 
@@ -353,6 +416,7 @@ These are the props for the `CookieManager` component (the main component you sh
 | `theme`                    | 'light' \| 'dark'                        | 'light'          | Color theme                               |
 | `disableAutomaticBlocking` | boolean                                  | false            | Disable automatic tracking prevention     |
 | `blockedDomains`           | string[]                                 | []               | Additional domains/hosts to block         |
+| `googleConsentMode`        | boolean \| GoogleConsentModeOptions      | -                | Enable Google Consent Mode v2 (see section above) |
 | `onManage`                 | (preferences?: CookieCategories) => void | -                | Callback when preferences are updated     |
 | `onAccept`                 | () => void                               | -                | Callback when all cookies are accepted    |
 | `onDecline`                | () => void                               | -                | Callback when all cookies are declined    |
