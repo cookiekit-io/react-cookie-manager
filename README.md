@@ -8,8 +8,6 @@ Privacy-first, flexible cookie consent for React. Automatically block trackers, 
 [![types: TypeScript](https://img.shields.io/badge/types-TypeScript-blue)](https://www.npmjs.com/package/react-cookie-manager)
 [![bundle size](https://img.shields.io/bundlephobia/minzip/react-cookie-manager)](https://bundlephobia.com/package/react-cookie-manager)
 
-![React Cookie Manager Hero](https://github.com/hypershiphq/react-cookie-manager/blob/main/assets/github-hero-banner.jpg?raw=true)
-
 ![React Cookie Manager](https://github.com/hypershiphq/react-cookie-manager/blob/main/assets/react-cookie-manager.gif?raw=true)
 
 ## Feature highlights
@@ -104,8 +102,6 @@ When a user hasn't consented to the required cookies, these embeds are replaced 
 - Maintain the same dimensions as the original content
 
 This ensures your site remains GDPR-compliant while providing a seamless user experience.
-
-![React Cookie Manager Styles](https://github.com/hypershiphq/react-cookie-manager/blob/main/assets/banner-styles.jpg?raw=true)
 
 ## Basic Usage
 
