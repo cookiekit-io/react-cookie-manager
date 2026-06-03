@@ -423,6 +423,7 @@ These are the props for the `CookieManager` component (the main component you sh
 | `onConsentLoaded`          | (consent: DetailedCookieConsent \| null) => void | -        | Fires once on mount with consent restored from storage (null if none) |
 | `classNames`               | CookieConsenterClassNames                | -                | Custom class names for styling            |
 | `cookieCategories`         | CookieCategories                         | { Analytics: true, Social: true, Advertising: true } | Which categories to show in Manage UI |
+| `categories`               | CategoryDefinition[]                     | built-ins        | Define custom categories / override built-ins (see [Custom Categories](#custom-categories)) |
 | `initialPreferences`       | CookieCategories                         | { Analytics: false, Social: false, Advertising: false } | Initial values for categories |
 
 ## CSS Customization
@@ -605,6 +606,49 @@ By default, all categories are shown. When a category is hidden, its initial val
 ```
 
 This means even hidden categories will retain their configured initial values and can still be programmatically accessed.
+
+### Custom Categories
+
+Beyond the three built-ins you can define your own categories with the `categories` prop. The built-ins (`Analytics`, `Social`, `Advertising`) are kept by default — passing a definition with a built-in `id` overrides its copy/domains, and any other `id` adds a custom category.
+
+```jsx
+import { CookieManager } from "react-cookie-manager";
+
+<CookieManager
+  categories={[
+    // Override a built-in's copy (optional):
+    { id: "Analytics", description: "Helps us improve the product" },
+    // Add custom categories:
+    {
+      id: "marketing",
+      title: "Marketing",
+      description: "Personalised offers and campaigns",
+      trackerDomains: ["ads.example.com", "track.partner.com"],
+      defaultConsent: false,
+    },
+    { id: "functional", title: "Functional", description: "Remember your settings" },
+  ]}
+>
+  {children}
+</CookieManager>;
+```
+
+`CategoryDefinition`:
+
+```typescript
+interface CategoryDefinition {
+  id: string; // consent key; built-ins: "Analytics" | "Social" | "Advertising"
+  title?: string; // display title (built-ins fall back to their translation key)
+  description?: string; // sub-text
+  defaultConsent?: boolean; // initial toggle value (default false)
+  essential?: boolean; // render as an always-on row (no toggle)
+  trackerDomains?: string[]; // hosts/keywords blocked when this category is declined
+}
+```
+
+- **Persistence & callbacks**: custom categories are stored in the consent cookie under their `id` and included in the `onManage` / `useCookieConsent().detailedConsent` data, e.g. `detailedConsent.marketing.consented`.
+- **Blocking**: when a category is declined (or before consent), every host/keyword in its `trackerDomains` is blocked automatically — this is additive to the built-in blocklists.
+- **Google Consent Mode**: the built-in mapping is unchanged; custom categories are not mapped to Google signals by default.
 
 ## Hook API
 

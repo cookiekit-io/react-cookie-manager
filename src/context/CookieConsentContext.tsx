@@ -10,6 +10,7 @@ import { createPortal } from "react-dom";
 import CookieConsenter from "../components/CookieConsenter";
 import { FloatingCookieButton } from "../components/FloatingCookieButton";
 import type {
+  CategoryDefinition,
   CookieCategories,
   CookieConsenterProps,
   DetailedCookieConsent,
@@ -20,6 +21,13 @@ const ManageConsent = React.lazy(() =>
   import("../components/ManageConsent").then((m) => ({ default: m.ManageConsent }))
 );
 import { getBlockedHosts, getBlockedKeywords } from "../utils/tracker-utils";
+import {
+  resolveCategories,
+  consentIdsFor,
+  consentToPrefs,
+  defaultPrefsFor,
+  customBlockedDomainsFor,
+} from "../utils/categories";
 import { createTFunction } from "../utils/translations";
 import { CookieBlockingManager, setBlockingEnabled, unblockPreviouslyBlockedContent } from "../utils/cookie-blocking";
 import { setCookie, getCookie, deleteCookie } from "../utils/cookie-utils";
@@ -116,23 +124,20 @@ const createConsentStatus = (consented: boolean) => ({
   timestamp: new Date().toISOString(),
 });
 
-const createDetailedConsent = (consented: boolean): DetailedCookieConsent => ({
-  Analytics: createConsentStatus(consented),
-  Social: createConsentStatus(consented),
-  Advertising: createConsentStatus(consented),
-});
+// Build a DetailedCookieConsent for the given category ids set to `consented`.
+// The three built-ins are always included for backward compatibility.
+const createDetailedConsent = (
+  consented: boolean,
+  ids: string[] = ["Analytics", "Social", "Advertising"]
+): DetailedCookieConsent => {
+  const out = {} as DetailedCookieConsent;
+  for (const id of ids) out[id] = createConsentStatus(consented);
+  return out;
+};
 
-// Flatten a DetailedCookieConsent into the boolean shape used for Google
-// Consent Mode mapping.
-const detailedConsentToPrefs = (
-  consent: DetailedCookieConsent
-): CookieCategories => ({
-  Analytics: consent.Analytics.consented,
-  Social: consent.Social.consented,
-  Advertising: consent.Advertising.consented,
-});
-
-// Normalize possibly partial consent loaded from cookie into a full DetailedCookieConsent
+// Normalize possibly partial consent loaded from cookie into a full
+// DetailedCookieConsent. Preserves the three built-ins (so reads stay safe) plus
+// any custom category keys present in the stored cookie.
 const normalizeDetailedConsent = (raw: any): DetailedCookieConsent => {
   const safeStatus = (status: any, fallbackTs: string) => {
     if (status && typeof status.consented === "boolean" && typeof status.timestamp === "string") {
@@ -153,17 +158,21 @@ const normalizeDetailedConsent = (raw: any): DetailedCookieConsent => {
     ? new Date(Math.min(...existingTimestamps)).toISOString()
     : new Date().toISOString();
 
-  return {
-    Analytics: safeStatus(raw?.Analytics, baseTimestamp),
-    Social: safeStatus(raw?.Social, baseTimestamp),
-    Advertising: safeStatus(raw?.Advertising, baseTimestamp),
-  };
+  const ids = new Set<string>(["Analytics", "Social", "Advertising"]);
+  if (raw && typeof raw === "object") {
+    Object.keys(raw).forEach((k) => ids.add(k));
+  }
+
+  const out = {} as DetailedCookieConsent;
+  for (const id of ids) out[id] = safeStatus(raw?.[id], baseTimestamp);
+  return out;
 };
 
 export const CookieManager: React.FC<CookieManagerProps> = ({
   children,
   cookieKey = "cookie-consent",
   cookieCategories,
+  categories,
   translations,
   translationI18NextPrefix,
   onManage,
@@ -192,6 +201,16 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
       ? {}
       : googleConsentMode
     : null;
+
+  // Resolve built-in + custom categories and the consent-key set they imply.
+  const resolvedCategories = useMemo(
+    () => resolveCategories(categories, cookieCategories, tFunction),
+    [categories, cookieCategories, tFunction]
+  );
+  const consentIds = useMemo(
+    () => consentIdsFor(resolvedCategories),
+    [resolvedCategories]
+  );
 
   const [detailedConsent, setDetailedConsent] =
     useState<DetailedCookieConsent | null>(() => {
@@ -230,17 +249,17 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
     ? Object.values(detailedConsent).some((status) => status.consented)
     : null;
 
-  // Prefer existing consent. Otherwise use provided initialPreferences from props
+  // Prefer existing consent. Otherwise use provided initialPreferences from
+  // props, falling back to each category's defaultConsent.
   const derivedInitialPreferences = useMemo(() => {
     if (detailedConsent) {
-      return {
-        Analytics: detailedConsent.Analytics.consented,
-        Social: detailedConsent.Social.consented,
-        Advertising: detailedConsent.Advertising.consented,
-      };
+      return consentToPrefs(detailedConsent);
     }
-    return props.initialPreferences;
-  }, [detailedConsent, props.initialPreferences]);
+    return {
+      ...defaultPrefsFor(resolvedCategories),
+      ...(props.initialPreferences || {}),
+    };
+  }, [detailedConsent, props.initialPreferences, resolvedCategories]);
 
   // Use the CookieBlockingManager
   const cookieBlockingManager = useRef<CookieBlockingManager | null>(null);
@@ -258,7 +277,7 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
     if (gcmOptions) {
       setGoogleConsentDefault(gcmOptions);
       if (detailedConsent) {
-        updateGoogleConsent(detailedConsentToPrefs(detailedConsent), gcmOptions);
+        updateGoogleConsent(consentToPrefs(detailedConsent), gcmOptions);
       }
     }
 
@@ -275,23 +294,27 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
 
     // Handle tracking blocking
     if (!disableAutomaticBlocking) {
-      // Get current preferences
+      // Get current preferences (null = block until explicit consent)
       const currentPreferences = detailedConsent
-        ? {
-            Analytics: detailedConsent.Analytics.consented,
-            Social: detailedConsent.Social.consented,
-            Advertising: detailedConsent.Advertising.consented,
-          }
-        : null; // block until explicit consent
+        ? consentToPrefs(detailedConsent)
+        : null;
+
+      // Per-category trackerDomains for declined categories (built-in + custom)
+      const customBlocked = customBlockedDomainsFor(
+        resolvedCategories,
+        currentPreferences
+      );
 
       // Get blocked hosts and keywords based on preferences
       const blockedHosts = [
         ...getBlockedHosts(currentPreferences),
+        ...customBlocked,
         ...blockedDomains,
       ];
 
       const blockedKeywords = [
         ...getBlockedKeywords(currentPreferences),
+        ...customBlocked,
         ...blockedDomains,
       ];
 
@@ -338,7 +361,19 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
         cookieBlockingManager.current.cleanup();
       }
     };
-  }, [detailedConsent, disableAutomaticBlocking, blockedDomains, showManageConsent]);
+  }, [detailedConsent, disableAutomaticBlocking, blockedDomains, showManageConsent, resolvedCategories]);
+
+  // Build the cookie payload, excluding categories hidden via `cookieCategories`.
+  const filterConsentForCookie = (
+    consent: DetailedCookieConsent
+  ): Partial<DetailedCookieConsent> => {
+    const payload: Partial<DetailedCookieConsent> = {};
+    for (const id of Object.keys(consent)) {
+      if (cookieCategories && cookieCategories[id] === false) continue;
+      payload[id] = consent[id];
+    }
+    return payload;
+  };
 
   const showConsentBanner = () => {
     if (!showManageConsent) {
@@ -348,19 +383,7 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
   };
 
   const acceptCookies = async () => {
-    const newConsent = createDetailedConsent(true);
-    const filterConsentForCookie = (consent: DetailedCookieConsent) => {
-      const allowed = cookieCategories || {
-        Analytics: true,
-        Social: true,
-        Advertising: true,
-      };
-      const payload: Partial<DetailedCookieConsent> = {};
-      if (allowed.Analytics !== false) payload.Analytics = consent.Analytics;
-      if (allowed.Social !== false) payload.Social = consent.Social;
-      if (allowed.Advertising !== false) payload.Advertising = consent.Advertising;
-      return payload;
-    };
+    const newConsent = createDetailedConsent(true, consentIds);
     const cookiePayload = filterConsentForCookie(newConsent);
     setCookie(cookieKey, JSON.stringify(cookiePayload), expirationDays);
     setDetailedConsent(newConsent);
@@ -380,14 +403,11 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
 
     // Google Consent Mode: grant the categories that are actually offered.
     if (gcmOptions) {
-      updateGoogleConsent(
-        {
-          Analytics: cookieCategories?.Analytics !== false,
-          Social: cookieCategories?.Social !== false,
-          Advertising: cookieCategories?.Advertising !== false,
-        },
-        gcmOptions
-      );
+      const acceptedPrefs = {} as CookieCategories;
+      for (const id of consentIds) {
+        acceptedPrefs[id] = !(cookieCategories && cookieCategories[id] === false);
+      }
+      updateGoogleConsent(acceptedPrefs, gcmOptions);
     }
 
     // Call the onAccept callback if provided
@@ -397,19 +417,7 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
   };
 
   const declineCookies = async () => {
-    const newConsent = createDetailedConsent(false);
-    const filterConsentForCookie = (consent: DetailedCookieConsent) => {
-      const allowed = cookieCategories || {
-        Analytics: true,
-        Social: true,
-        Advertising: true,
-      };
-      const payload: Partial<DetailedCookieConsent> = {};
-      if (allowed.Analytics !== false) payload.Analytics = consent.Analytics;
-      if (allowed.Social !== false) payload.Social = consent.Social;
-      if (allowed.Advertising !== false) payload.Advertising = consent.Advertising;
-      return payload;
-    };
+    const newConsent = createDetailedConsent(false, consentIds);
     const cookiePayload = filterConsentForCookie(newConsent);
     setCookie(cookieKey, JSON.stringify(cookiePayload), expirationDays);
     setDetailedConsent(newConsent);
@@ -420,10 +428,9 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
 
     // Google Consent Mode: everything denied.
     if (gcmOptions) {
-      updateGoogleConsent(
-        { Analytics: false, Social: false, Advertising: false },
-        gcmOptions
-      );
+      const declinedPrefs = {} as CookieCategories;
+      for (const id of consentIds) declinedPrefs[id] = false;
+      updateGoogleConsent(declinedPrefs, gcmOptions);
     }
 
     // Call the onDecline callback if provided
@@ -434,23 +441,10 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
 
   const updateDetailedConsent = async (preferences: CookieCategories) => {
     const timestamp = new Date().toISOString();
-    const newConsent: DetailedCookieConsent = {
-      Analytics: { consented: preferences.Analytics, timestamp },
-      Social: { consented: preferences.Social, timestamp },
-      Advertising: { consented: preferences.Advertising, timestamp },
-    };
-    const filterConsentForCookie = (consent: DetailedCookieConsent) => {
-      const allowed = cookieCategories || {
-        Analytics: true,
-        Social: true,
-        Advertising: true,
-      };
-      const payload: Partial<DetailedCookieConsent> = {};
-      if (allowed.Analytics !== false) payload.Analytics = consent.Analytics;
-      if (allowed.Social !== false) payload.Social = consent.Social;
-      if (allowed.Advertising !== false) payload.Advertising = consent.Advertising;
-      return payload;
-    };
+    const newConsent = {} as DetailedCookieConsent;
+    for (const id of consentIds) {
+      newConsent[id] = { consented: preferences[id] ?? false, timestamp };
+    }
     const cookiePayload = filterConsentForCookie(newConsent);
     setCookie(cookieKey, JSON.stringify(cookiePayload), expirationDays);
     setDetailedConsent(newConsent);
@@ -461,12 +455,15 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
 
     // Reconfigure blocking immediately according to explicit preferences
     try {
+      const customBlocked = customBlockedDomainsFor(resolvedCategories, preferences);
       const blockedHosts = [
         ...getBlockedHosts(preferences),
+        ...customBlocked,
         ...blockedDomains,
       ];
       const blockedKeywords = [
         ...getBlockedKeywords(preferences),
+        ...customBlocked,
         ...blockedDomains,
       ];
 
@@ -570,6 +567,7 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
           theme={theme}
           tFunction={tFunction}
           cookieCategories={cookieCategories}
+          categories={categories}
           cookieKey={cookieKey}
           onAccept={acceptCookies}
           onDecline={declineCookies}
@@ -597,6 +595,7 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
                     onCancel={handleCancelManage}
                     initialPreferences={derivedInitialPreferences}
                     cookieCategories={cookieCategories}
+                    categories={categories}
                     detailedConsent={detailedConsent}
                     classNames={props.classNames}
                   />

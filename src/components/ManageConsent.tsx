@@ -1,26 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
+  CategoryDefinition,
   CookieCategories,
   DetailedCookieConsent,
   CookieConsenterClassNames,
 } from "../types/types";
 import { TFunction } from "../utils/translations";
+import { resolveCategories, consentIdsFor } from "../utils/categories";
 import { cn } from "../utils/cn";
 
-// Stable module-level defaults so a missing prop doesn't produce a new object
-// identity on every render (which previously caused the resync effect below to
-// fire continuously — see issues #40 and #43).
-const DEFAULT_INITIAL_PREFERENCES: CookieCategories = {
-  Analytics: false,
-  Social: false,
-  Advertising: false,
-};
-
-const DEFAULT_COOKIE_CATEGORIES: CookieCategories = {
-  Analytics: true,
-  Social: true,
-  Advertising: true,
-};
+// Stable empty default so a missing prop doesn't produce a new object identity
+// on every render (which previously caused the resync effect below to fire
+// continuously — see issues #40 and #43).
+const EMPTY_PREFERENCES: CookieCategories = {} as CookieCategories;
 
 interface ManageConsentProps {
   theme?: "light" | "dark";
@@ -30,6 +22,7 @@ interface ManageConsentProps {
   initialPreferences?: CookieCategories;
   detailedConsent?: DetailedCookieConsent | null;
   cookieCategories?: CookieCategories;
+  categories?: CategoryDefinition[];
   classNames?: CookieConsenterClassNames;
 }
 
@@ -38,29 +31,49 @@ export const ManageConsent: React.FC<ManageConsentProps> = ({
   tFunction,
   onSave,
   onCancel,
-  initialPreferences = DEFAULT_INITIAL_PREFERENCES,
-  cookieCategories = DEFAULT_COOKIE_CATEGORIES,
+  initialPreferences = EMPTY_PREFERENCES,
+  cookieCategories,
+  categories,
   detailedConsent,
   classNames,
 }) => {
-  const [consent, setConsent] = useState<CookieCategories>(initialPreferences);
+  // Resolve the built-in + custom categories that should be displayed.
+  const resolved = useMemo(
+    () => resolveCategories(categories, cookieCategories, tFunction),
+    [categories, cookieCategories, tFunction]
+  );
 
-  // Keep local state in sync if initialPreferences actually change. Depend on
-  // the primitive values rather than the object identity so a freshly-created
-  // object each render does not retrigger the effect (issues #40 and #43).
+  // Track consent for the built-ins (always, even if hidden — preserves the
+  // historical onSave shape) plus any visible custom categories.
+  const trackedIds = consentIdsFor(resolved);
+  const defaultFor = (id: string): boolean =>
+    resolved.find((c) => c.id === id)?.defaultConsent ?? false;
+
+  // Initial toggle value: an explicit initialPreference wins, otherwise the
+  // category's own defaultConsent.
+  const initialFor = (id: string): boolean =>
+    initialPreferences[id] ?? defaultFor(id);
+
+  const buildInitialConsent = (): CookieCategories => {
+    const next = {} as CookieCategories;
+    for (const id of trackedIds) next[id] = initialFor(id);
+    return next;
+  };
+
+  const [consent, setConsent] = useState<CookieCategories>(buildInitialConsent);
+
+  // Keep local state in sync if the meaningful initial values change. Depend on
+  // a primitive signature (not object identity) so a freshly-created object each
+  // render does not retrigger the effect (issues #40 and #43).
+  const initialSignature = trackedIds
+    .map((id) => `${id}:${initialFor(id) ? 1 : 0}`)
+    .join("|");
   useEffect(() => {
-    setConsent({
-      Analytics: initialPreferences.Analytics,
-      Social: initialPreferences.Social,
-      Advertising: initialPreferences.Advertising,
-    });
-  }, [
-    initialPreferences.Analytics,
-    initialPreferences.Social,
-    initialPreferences.Advertising,
-  ]);
+    setConsent(buildInitialConsent());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSignature]);
 
-  const handleToggle = (category: keyof CookieCategories) => {
+  const handleToggle = (category: string) => {
     setConsent((prev) => ({
       ...prev,
       [category]: !prev[category],
@@ -86,7 +99,7 @@ export const ManageConsent: React.FC<ManageConsentProps> = ({
     }
   };
 
-  const renderConsentStatus = (category: keyof CookieCategories) => {
+  const renderConsentStatus = (category: string) => {
     if (!detailedConsent || !detailedConsent[category]) return null;
 
     const status = detailedConsent[category];
@@ -204,9 +217,10 @@ export const ManageConsent: React.FC<ManageConsentProps> = ({
           </div>
         </div>
 
-        {/* Analytics Cookies */}
-        {cookieCategories.Analytics !== false && (
+        {/* Configurable categories (built-in + custom) */}
+        {resolved.map((category) => (
           <div
+            key={category.id}
             className={
               classNames?.manageCookieCategory
                 ? cn(classNames.manageCookieCategory)
@@ -224,182 +238,65 @@ export const ManageConsent: React.FC<ManageConsentProps> = ({
                       )
                 }
               >
-                {tFunction("manageAnalyticsTitle")}
+                {category.title}
               </h4>
-              <p
-                className={
-                  classNames?.manageCookieCategorySubtitle
-                    ? cn(classNames.manageCookieCategorySubtitle)
-                    : cn(
-                        "text-xs text-left",
-                        theme === "light" ? "text-gray-600" : "text-gray-400"
-                      )
-                }
-              >
-                {tFunction("manageAnalyticsSubtitle")}
-              </p>
-              {renderConsentStatus("Analytics")}
+              {category.description && (
+                <p
+                  className={
+                    classNames?.manageCookieCategorySubtitle
+                      ? cn(classNames.manageCookieCategorySubtitle)
+                      : cn(
+                          "text-xs text-left",
+                          theme === "light" ? "text-gray-600" : "text-gray-400"
+                        )
+                  }
+                >
+                  {category.description}
+                </p>
+              )}
+              {renderConsentStatus(category.id)}
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={consent.Analytics}
-                onChange={() => handleToggle("Analytics")}
-                className="sr-only peer"
-              />
+            {category.essential ? (
               <div
-                className={
-                  classNames?.manageCookieToggle
-                    ? cn(
-                        classNames.manageCookieToggle,
-                        consent.Analytics &&
-                          classNames.manageCookieToggleChecked
-                      )
-                    : cn(`w-11 h-6 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-500 
+                className={`px-3 py-1 text-xs text-center font-medium rounded-full ${
+                  theme === "light"
+                    ? "bg-gray-200 text-gray-600"
+                    : "bg-gray-800 text-gray-300"
+                }`}
+              >
+                {tFunction("manageEssentialStatusButtonText")}
+              </div>
+            ) : (
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={consent[category.id] ?? false}
+                  onChange={() => handleToggle(category.id)}
+                  className="sr-only peer"
+                />
+                <div
+                  className={
+                    classNames?.manageCookieToggle
+                      ? cn(
+                          classNames.manageCookieToggle,
+                          consent[category.id] &&
+                            classNames.manageCookieToggleChecked
+                        )
+                      : cn(`w-11 h-6 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-500
                 ${
                   theme === "light"
                     ? "bg-gray-200 peer-checked:bg-blue-500"
                     : "bg-gray-700 peer-checked:bg-blue-500"
-                } 
-                peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 
-                after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 
+                }
+                peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5
+                after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5
                 after:transition-all`)
-                }
-              ></div>
-            </label>
+                  }
+                ></div>
+              </label>
+            )}
           </div>
-        )}
-
-        {/* Social Cookies */}
-        {cookieCategories.Social !== false && (
-          <div
-            className={
-              classNames?.manageCookieCategory
-                ? cn(classNames.manageCookieCategory)
-                : "flex items-start justify-between"
-            }
-          >
-            <div>
-              <h4
-                className={
-                  classNames?.manageCookieCategoryTitle
-                    ? cn(classNames.manageCookieCategoryTitle)
-                    : cn(
-                        "text-xs font-medium text-left",
-                        theme === "light" ? "text-gray-900" : "text-white"
-                      )
-                }
-              >
-                {tFunction("manageSocialTitle")}
-              </h4>
-              <p
-                className={
-                  classNames?.manageCookieCategorySubtitle
-                    ? cn(classNames.manageCookieCategorySubtitle)
-                    : cn(
-                        "text-xs text-left",
-                        theme === "light" ? "text-gray-600" : "text-gray-400"
-                      )
-                }
-              >
-                {tFunction("manageSocialSubtitle")}
-              </p>
-              {renderConsentStatus("Social")}
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={consent.Social}
-                onChange={() => handleToggle("Social")}
-                className="sr-only peer"
-              />
-              <div
-                className={
-                  classNames?.manageCookieToggle
-                    ? cn(
-                        classNames.manageCookieToggle,
-                        consent.Social && classNames.manageCookieToggleChecked
-                      )
-                    : cn(`w-11 h-6 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-500 
-                ${
-                  theme === "light"
-                    ? "bg-gray-200 peer-checked:bg-blue-500"
-                    : "bg-gray-700 peer-checked:bg-blue-500"
-                } 
-                peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 
-                after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 
-                after:transition-all`)
-                }
-              ></div>
-            </label>
-          </div>
-        )}
-
-        {/* Advertising Cookies */}
-        {cookieCategories.Advertising !== false && (
-          <div
-            className={
-              classNames?.manageCookieCategory
-                ? cn(classNames.manageCookieCategory)
-                : "flex items-start justify-between"
-            }
-          >
-            <div>
-              <h4
-                className={
-                  classNames?.manageCookieCategoryTitle
-                    ? cn(classNames.manageCookieCategoryTitle)
-                    : cn(
-                        "text-xs font-medium text-left",
-                        theme === "light" ? "text-gray-900" : "text-white"
-                      )
-                }
-              >
-                {tFunction("manageAdvertTitle")}
-              </h4>
-              <p
-                className={
-                  classNames?.manageCookieCategorySubtitle
-                    ? cn(classNames.manageCookieCategorySubtitle)
-                    : cn(
-                        "text-xs text-left",
-                        theme === "light" ? "text-gray-600" : "text-gray-400"
-                      )
-                }
-              >
-                {tFunction("manageAdvertSubtitle")}
-              </p>
-              {renderConsentStatus("Advertising")}
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={consent.Advertising}
-                onChange={() => handleToggle("Advertising")}
-                className="sr-only peer"
-              />
-              <div
-                className={
-                  classNames?.manageCookieToggle
-                    ? cn(
-                        classNames.manageCookieToggle,
-                        consent.Advertising &&
-                          classNames.manageCookieToggleChecked
-                      )
-                    : cn(`w-11 h-6 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-500 
-                ${
-                  theme === "light"
-                    ? "bg-gray-200 peer-checked:bg-blue-500"
-                    : "bg-gray-700 peer-checked:bg-blue-500"
-                } 
-                peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 
-                after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 
-                after:transition-all`)
-                }
-              ></div>
-            </label>
-          </div>
-        )}
+        ))}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 mt-2 sm:justify-end">

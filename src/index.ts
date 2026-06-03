@@ -4,6 +4,7 @@ export type {
   CookieConsenterProps,
   CookieCategories,
   DetailedCookieConsent,
+  CategoryDefinition,
   TranslationKey,
   TranslationObject,
 } from "./types/types";

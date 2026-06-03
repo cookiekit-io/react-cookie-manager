@@ -57,6 +57,7 @@ const MobileModal: React.FC<
   initialPreferences,
   detailedConsent,
   cookieCategories,
+  categories,
   classNames,
 }) => {
   const title = tFunction("title");
@@ -100,6 +101,7 @@ const MobileModal: React.FC<
               onCancel={handleCancelManage}
               initialPreferences={initialPreferences}
               cookieCategories={cookieCategories}
+              categories={categories}
               detailedConsent={detailedConsent}
               classNames={classNames}
             />
@@ -214,6 +216,7 @@ const CookieConsenter: React.FC<
     Social: true,
     Advertising: true,
   },
+  categories,
   detailedConsent,
   isManaging = false,
   classNames,
@@ -303,6 +306,7 @@ const CookieConsenter: React.FC<
           displayType,
           initialPreferences,
           cookieCategories,
+          categories,
           detailedConsent,
           classNames,
         }}

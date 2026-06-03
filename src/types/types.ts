@@ -34,6 +34,9 @@ export interface CookieCategories {
   Analytics: boolean;
   Social: boolean;
   Advertising: boolean;
+  // Allow arbitrary custom category ids (see CategoryDefinition / the
+  // `categories` prop) while keeping the three built-ins type-safe.
+  [id: string]: boolean;
 }
 
 export interface ConsentStatus {
@@ -45,6 +48,29 @@ export interface DetailedCookieConsent {
   Analytics: ConsentStatus;
   Social: ConsentStatus;
   Advertising: ConsentStatus;
+  [id: string]: ConsentStatus;
+}
+
+/**
+ * Defines a cookie category shown in the manage-consent UI. The three built-in
+ * ids — `Analytics`, `Social`, `Advertising` — keep their default blocklists,
+ * translations and Google Consent Mode mapping; passing a definition with a
+ * built-in `id` overrides its copy/domains. Any other `id` adds a custom
+ * category.
+ */
+export interface CategoryDefinition {
+  /** Consent key. Built-ins: "Analytics" | "Social" | "Advertising". */
+  id: string;
+  /** Display title. Built-ins fall back to their translation key. */
+  title?: string;
+  /** Sub-text shown under the title. */
+  description?: string;
+  /** Initial toggle value when no prior consent exists. @default false */
+  defaultConsent?: boolean;
+  /** Render as an always-on row (no toggle), like Essential. */
+  essential?: boolean;
+  /** Hosts/keywords blocked when this category is declined (additive). */
+  trackerDomains?: string[];
 }
 
 export type TranslationKey =
@@ -258,6 +284,13 @@ export interface CookieConsenterProps {
    * @default { Analytics: true, Social: true, Advertising: true }
    */
   cookieCategories?: CookieCategories;
+
+  /**
+   * Define custom categories and/or override the built-in ones. Omit to use the
+   * three built-ins (Analytics, Social, Advertising). Entries with a built-in
+   * `id` override its copy/domains; other ids add custom categories.
+   */
+  categories?: CategoryDefinition[];
 
   /**
    * Detailed consent information including timestamps
