@@ -23,52 +23,6 @@ import { getBlockedHosts, getBlockedKeywords } from "../utils/tracker-utils";
 import { createTFunction } from "../utils/translations";
 import { CookieBlockingManager, setBlockingEnabled, unblockPreviouslyBlockedContent } from "../utils/cookie-blocking";
 import { setCookie, getCookie, deleteCookie } from "../utils/cookie-utils";
-import {
-  generateSessionId,
-  postSessionToAnalytics,
-} from "../utils/session-utils";
-
-const GEO_ENDPOINT = "https://consent-geo.cookiekit.io/";
-const GEO_DECISION_KEY = "rcm_geo_decision_v1";
-const GEO_PROMISE_KEY = "__rcm_geo_promise__";
-
-// Helper function to check if running on localhost
-const isLocalhost = (): boolean => {
-  if (typeof window !== "undefined") {
-    const hostname = window.location.hostname;
-    return (
-      hostname === "localhost" ||
-      hostname === "127.0.0.1" ||
-      hostname.startsWith("192.168.") ||
-      hostname.startsWith("10.")
-    );
-  }
-  return false;
-};
-
-// Helper function to post to analytics if not on localhost
-const postToAnalyticsIfNotLocalhost = async (
-  cookieKitId: string,
-  sessionId: string,
-  action?: string,
-  preferences?: CookieCategories,
-  userId?: string
-) => {
-  if (isLocalhost()) {
-    console.log(
-      "[CookieKit] Running on localhost - consent data will be sent when deployed to production"
-    );
-    return;
-  }
-
-  await postSessionToAnalytics(
-    cookieKitId,
-    sessionId,
-    action,
-    preferences,
-    userId
-  );
-};
 
 interface CookieConsentContextValue {
   hasConsent: boolean | null;
@@ -89,8 +43,6 @@ export interface CookieManagerProps
   extends Omit<CookieConsenterProps, "onAccept" | "onDecline" | "forceShow"> {
   children: React.ReactNode;
   cookieKey?: string;
-  cookieKitId?: string;
-  userId?: string;
   onManage?: (preferences?: CookieCategories) => void;
   onAccept?: () => void;
   onDecline?: () => void;
@@ -136,11 +88,6 @@ export interface CookieManagerProps
   translationI18NextPrefix?: string;
   enableFloatingButton?: boolean;
   theme?: "light" | "dark";
-  /**
-   * Disable geolocation gating. When true, the banner will be shown (if no consent) without geo checks.
-   * @default false
-   */
-  disableGeolocation?: boolean;
 }
 
 const createConsentStatus = (consented: boolean) => ({
@@ -185,9 +132,7 @@ const normalizeDetailedConsent = (raw: any): DetailedCookieConsent => {
 export const CookieManager: React.FC<CookieManagerProps> = ({
   children,
   cookieKey = "cookie-consent",
-  cookieKitId,
   cookieCategories,
-  userId,
   translations,
   translationI18NextPrefix,
   onManage,
@@ -198,13 +143,11 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
   expirationDays = 365,
   enableFloatingButton = false,
   theme = "light",
-  disableGeolocation = false,
   ...props
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [showManageConsent, setShowManageConsent] = useState(false);
   const [isFloatingButtonVisible, setIsFloatingButtonVisible] = useState(false);
-  const [geoShowDecision, setGeoShowDecision] = useState<boolean | null>(null);
   const tFunction = useMemo(
     () => createTFunction(translations, translationI18NextPrefix),
     [translations, translationI18NextPrefix]
@@ -262,135 +205,14 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
   // Use the CookieBlockingManager
   const cookieBlockingManager = useRef<CookieBlockingManager | null>(null);
 
-  // Initialize session ID if cookieKitId is provided
   useEffect(() => {
-    let isMounted = true;
-    let isInitializing = false;
-
-    const initializeSessionId = async () => {
-      if (!cookieKitId || isInitializing) return;
-
-      isInitializing = true;
-      const sessionKey = `${cookieKey}-session`;
-      let sessionId = getCookie(sessionKey);
-
-      if (!sessionId) {
-        try {
-          sessionId = await generateSessionId(cookieKitId);
-          if (!isMounted) return;
-          setCookie(sessionKey, sessionId, 1);
-          const savedSessionId = getCookie(sessionKey);
-          if (savedSessionId && isMounted) {
-            await postToAnalyticsIfNotLocalhost(
-              cookieKitId,
-              sessionId,
-              undefined,
-              undefined,
-              userId
-            );
-          }
-        } catch (error) {
-          console.error("Error in session initialization:", error);
-        }
-      } else {
-      }
-    };
-
-    initializeSessionId();
-
-    return () => {
-      isMounted = false;
-      isInitializing = false;
-    };
-  }, [cookieKitId, cookieKey, userId]);
-
-  useEffect(() => {
-    let cancelled = false;
-    // Show banner only for regulated regions when no consent exists and manage is not shown
-    const maybeShow = async () => {
-      if (detailedConsent !== null || showManageConsent) return;
-      // If explicitly disabled, show banner without geo checks
-      if (disableGeolocation) {
-        if (!cancelled) {
-          setGeoShowDecision(true);
-          setIsVisible(true);
-        }
-        return;
-      }
-      // Call hardcoded Cloudflare Worker endpoint exactly once per session
-      const fetchWithTimeout = async (url: string, ms: number): Promise<Response> => {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), ms);
-        try {
-          const res = await fetch(url, {
-            signal: controller.signal,
-            headers: { accept: 'application/json' },
-          });
-          clearTimeout(timer);
-          return res;
-        } finally {
-          clearTimeout(timer);
-        }
-      };
-
-      const url = `${GEO_ENDPOINT}?t=${Date.now()}`;
-
-      // 1) Check cached decision (6h TTL)
-      try {
-        const cached = sessionStorage.getItem(GEO_DECISION_KEY);
-        if (cached) {
-          const parsed = JSON.parse(cached) as { ts: number; show: boolean };
-          if (Date.now() - parsed.ts < 6 * 60 * 60 * 1000) {
-            if (!cancelled) {
-              setGeoShowDecision(parsed.show);
-              if (parsed.show) setIsVisible(true);
-            }
-            return;
-          }
-        }
-      } catch {}
-
-      // 2) Single-flight across components/StrictMode
-      const w = typeof window !== 'undefined' ? (window as any) : undefined;
-      if (w && w[GEO_PROMISE_KEY]) {
-        try {
-          const show: boolean = await w[GEO_PROMISE_KEY];
-          if (!cancelled) {
-            setGeoShowDecision(show);
-            if (show) setIsVisible(true);
-          }
-        } catch {}
-        return;
-      }
-
-      const promise: Promise<boolean> = (async () => {
-        const res = await fetchWithTimeout(url, 5000);
-        if (!res.ok) return false;
-        const data = (await res.json().catch(() => null)) as { showConsentBanner?: boolean } | null;
-        const show = Boolean(data?.showConsentBanner);
-        try {
-          sessionStorage.setItem(GEO_DECISION_KEY, JSON.stringify({ ts: Date.now(), show }));
-        } catch {}
-        return show;
-      })();
-
-      if (w) w[GEO_PROMISE_KEY] = promise;
-
-      try {
-        const show = await promise;
-        if (!cancelled) {
-          setGeoShowDecision(show);
-          if (show) setIsVisible(true);
-        }
-      } finally {
-        if (w) w[GEO_PROMISE_KEY] = undefined;
-      }
-    };
-    maybeShow();
+    // Show banner if no consent decision has been made AND manage consent is not shown
+    if (detailedConsent === null && !showManageConsent) {
+      setIsVisible(true);
+    }
 
     // Handle tracking blocking
     if (!disableAutomaticBlocking) {
-      const isRegulated = disableGeolocation ? true : geoShowDecision === true;
       // Get current preferences
       const currentPreferences = detailedConsent
         ? {
@@ -398,9 +220,7 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
             Social: detailedConsent.Social.consented,
             Advertising: detailedConsent.Advertising.consented,
           }
-        : isRegulated
-        ? null // regulated: block until explicit consent
-        : { Analytics: true, Social: true, Advertising: true }; // unregulated: allow all
+        : null; // block until explicit consent
 
       // Get blocked hosts and keywords based on preferences
       const blockedHosts = [
@@ -456,7 +276,7 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
         cookieBlockingManager.current.cleanup();
       }
     };
-  }, [detailedConsent, disableAutomaticBlocking, blockedDomains, showManageConsent, disableGeolocation, geoShowDecision]);
+  }, [detailedConsent, disableAutomaticBlocking, blockedDomains, showManageConsent]);
 
   const showConsentBanner = () => {
     if (!showManageConsent) {
@@ -496,25 +316,6 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
       unblockPreviouslyBlockedContent([]);
     } catch (e) {}
 
-    if (cookieKitId) {
-      const sessionKey = `${cookieKey}-session`;
-      const sessionId = getCookie(sessionKey);
-      if (sessionId) {
-        const acceptedPrefs = {
-          Analytics: cookieCategories?.Analytics !== false,
-          Social: cookieCategories?.Social !== false,
-          Advertising: cookieCategories?.Advertising !== false,
-        } as CookieCategories;
-        await postToAnalyticsIfNotLocalhost(
-          cookieKitId,
-          sessionId,
-          "accept",
-          acceptedPrefs,
-          userId
-        );
-      }
-    }
-
     // Call the onAccept callback if provided
     if (onAccept) {
       onAccept();
@@ -541,24 +342,6 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
     setIsVisible(false);
     if (enableFloatingButton) {
       setIsFloatingButtonVisible(true);
-    }
-
-    if (cookieKitId) {
-      const sessionKey = `${cookieKey}-session`;
-      const sessionId = getCookie(sessionKey);
-      if (sessionId) {
-        await postToAnalyticsIfNotLocalhost(
-          cookieKitId,
-          sessionId,
-          "decline",
-          {
-            Analytics: false,
-            Social: false,
-            Advertising: false,
-          },
-          userId
-        );
-      }
     }
 
     // Call the onDecline callback if provided

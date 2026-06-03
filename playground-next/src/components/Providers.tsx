@@ -8,7 +8,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <I18nextProvider i18n={i18n}>
       <CookieManager
-        cookieKitId="123"
         enableFloatingButton={true}
         showManageButton={true}
         translations={i18n.t}

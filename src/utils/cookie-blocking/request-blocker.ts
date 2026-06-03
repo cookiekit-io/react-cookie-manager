@@ -19,7 +19,7 @@ export const blockTrackingRequests = (blockedHosts: string[]) => {
   XMLHttpRequest.prototype.open = function (method: string, url: string | URL) {
     const urlString = url.toString();
     if (blockedHosts.some((host) => urlString.includes(host))) {
-      console.debug(`[CookieKit] Blocked XMLHttpRequest to: ${urlString}`);
+      console.debug(`[react-cookie-manager] Blocked XMLHttpRequest to: ${urlString}`);
       throw new Error(`Request to ${urlString} blocked by consent settings`);
     }
     return originalXhrOpen!.apply(this, arguments as any);
@@ -32,7 +32,7 @@ export const blockTrackingRequests = (blockedHosts: string[]) => {
       typeof urlString === "string" &&
       blockedHosts.some((host) => urlString.includes(host))
     ) {
-      console.debug(`[CookieKit] Blocked fetch request to: ${urlString}`);
+      console.debug(`[react-cookie-manager] Blocked fetch request to: ${urlString}`);
       return Promise.resolve(
         new Response(null, {
           status: 403,

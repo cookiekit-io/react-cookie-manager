@@ -28,7 +28,6 @@ export interface CookieConsenterClassNames {
   manageCookieStatusText?: string;
   manageCookieToggle?: string;
   manageCookieToggleChecked?: string;
-  poweredByLink?: string;
 }
 
 export interface CookieCategories {
@@ -295,10 +294,4 @@ export interface CookieConsenterProps {
    * @default false
    */
   forceShow?: boolean;
-
-  /**
-   * Optional identifier for cookie kit analytics
-   * When provided, generates a unique session ID for tracking consent events
-   */
-  cookieKitId?: string;
 }

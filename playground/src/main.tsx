@@ -51,7 +51,6 @@ createRoot(document.getElementById("root")!).render(
       showManageButton={true}
       privacyPolicyUrl="https://example.com/privacy"
       theme="light"
-      cookieKitId="67b322ffb47f4471855cda97"
       displayType="popup"
       initialPreferences={{ Analytics: true, Social: true, Advertising: true }}
       enableFloatingButton={true}

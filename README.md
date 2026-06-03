@@ -8,13 +8,12 @@ Privacy-first, flexible cookie consent for React. Automatically block trackers, 
 [![types: TypeScript](https://img.shields.io/badge/types-TypeScript-blue)](https://www.npmjs.com/package/react-cookie-manager)
 [![bundle size](https://img.shields.io/bundlephobia/minzip/react-cookie-manager)](https://bundlephobia.com/package/react-cookie-manager)
 
-[![React Cookie Manager Hero](https://github.com/hypershiphq/react-cookie-manager/blob/main/assets/github-hero-banner.jpg?raw=true)](https://cookiekit.io)
+![React Cookie Manager Hero](https://github.com/hypershiphq/react-cookie-manager/blob/main/assets/github-hero-banner.jpg?raw=true)
 
 ![React Cookie Manager](https://github.com/hypershiphq/react-cookie-manager/blob/main/assets/react-cookie-manager.gif?raw=true)
 
 ## Feature highlights
 
-- Geolocation-based auto-display (shows banner only in regulated regions)
 - Automatic blocking of common trackers and third-party embeds
 - Granular categories (Analytics, Social, Advertising)
 - Beautiful, responsive UI (banner, popup, modal) with theming
@@ -49,10 +48,7 @@ Styles are automatically injected; no manual CSS import is required.
 
 - [Quick Start](#quick-start)
 - [Features](#features)
-- [Try it out](#-try-it-out)
-- [CookieKit Integration](#cookiekit-integration)
 - [Automatically Disable Tracking](#automatically-disable-tracking)
-- [Geolocation](#geolocation)
 - [Installation](#installation)
 - [Basic Usage](#basic-usage)
 - [Next.js Usage](#nextjs-usage)
@@ -83,54 +79,8 @@ Styles are automatically injected; no manual CSS import is required.
 - 🔧 Highly customizable UI
 - 💾 Persistent consent storage
 - 🔒 Privacy-first approach
-- 🇪🇺 GDPR compliance with CookieKit.io integration
+- 🇪🇺 GDPR compliance
 - 🍪 Floating cookie button for easy access
-
-## CookieKit Integration
-
-Take your GDPR compliance to the next level with [CookieKit.io](https://cookiekit.io) integration!
-
-### Features
-
-- 📊 Real-time consent analytics dashboard
-- 🔄 Automatic consent proof storage
-- 📈 Advanced user segmentation
-- 🆓 Completely free to use!
-
-### Usage with CookieKit
-
-```jsx
-import { CookieManager } from "react-cookie-manager";
-
-function App() {
-  return (
-    <CookieManager
-      cookieKitId="" // Get this from cookiekit.io
-      translations={{
-        title: "Cookie Preferences",
-        message: "We use cookies to improve your experience.",
-      }}
-    >
-      <YourApp />
-    </CookieManager>
-  );
-}
-```
-
-When `cookieKitId` is provided, React Cookie Manager will automatically:
-
-- Generate and track unique session IDs
-- Send consent events to CookieKit.io
-- Store consent proofs for GDPR compliance
-- Provide analytics data in your CookieKit dashboard
-
-Visit [cookiekit.io](https://cookiekit.io) to get started for free!
-
-## 🎮 Try it out!
-
-### [🔗 Live Demo](https://cookiekit.io/playground)
-
-See React Cookie Manager in action and explore all its features in our interactive demo.
 
 ## Automatically Disable Tracking
 
@@ -156,25 +106,6 @@ When a user hasn't consented to the required cookies, these embeds are replaced 
 This ensures your site remains GDPR-compliant while providing a seamless user experience.
 
 ![React Cookie Manager Styles](https://github.com/hypershiphq/react-cookie-manager/blob/main/assets/banner-styles.jpg?raw=true)
-
-## Geolocation
-
-React Cookie Manager can automatically decide whether to show the cookie banner based on the user’s region.
-
-- Logic: only shows for regulated jurisdictions (GDPR: EU/EEA/UK, CH, BR, CA/PIPEDA, AU, JP/APPI, KR/PIPA, certain US regions like US-CA).
-- Opt-out: pass `disableGeolocation` to skip the check and always show the banner when no consent is stored.
-
-### Usage
-
-```tsx
-import { CookieManager } from "react-cookie-manager";
-
-// Geolocation enabled by default
-<CookieManager>{children}</CookieManager>
-
-// Opt-out: disable geolocation gating
-<CookieManager disableGeolocation>{children}</CookieManager>
-```
 
 ## Basic Usage
 
@@ -293,7 +224,6 @@ function App() {
       privacyPolicyUrl="https://example.com/privacy"
       theme="light"
       displayType="popup"
-      cookieKitId="" // Optional: Enable CookieKit.io integration
       onManage={(preferences) => {
         if (preferences) {
           console.log("Cookie preferences updated:", preferences);
@@ -427,8 +357,6 @@ These are the props for the `CookieManager` component (the main component you sh
 | `theme`                    | 'light' \| 'dark'                        | 'light'          | Color theme                               |
 | `disableAutomaticBlocking` | boolean                                  | false            | Disable automatic tracking prevention     |
 | `blockedDomains`           | string[]                                 | []               | Additional domains/hosts to block         |
-| `cookieKitId`              | string                                   | -                | Your CookieKit.io integration ID          |
-| `userId`                   | string                                   | -                | Optional user id for CookieKit analytics  |
 | `onManage`                 | (preferences?: CookieCategories) => void | -                | Callback when preferences are updated     |
 | `onAccept`                 | () => void                               | -                | Callback when all cookies are accepted    |
 | `onDecline`                | () => void                               | -                | Callback when all cookies are declined    |
@@ -493,7 +421,6 @@ React Cookie Manager provides extensive styling customization through the `class
 
     // Other elements
     privacyPolicyLink: "text-blue-600 underline hover:text-blue-800",
-    poweredByLink: "text-gray-400 hover:text-gray-600",
   }}
 >
   {children}
@@ -579,7 +506,6 @@ The classNames are organized by component type:
 - `privacyPolicyLink`: Style for the privacy policy link
 - `floatingButton`: Style for the floating cookie button
 - `floatingButtonCloseButton`: Style for the close button on the floating cookie button
-- `poweredByLink`: Style for the "Powered by CookieKit" link
 
 ## Cookie Categories
 
