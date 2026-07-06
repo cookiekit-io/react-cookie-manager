@@ -35,7 +35,7 @@ describe('blocked-content placeholder translations (#39)', () => {
     setBlockingTranslationFunction(t);
 
     addBlockableIframe();
-    observer = blockTrackingScripts(['youtube']);
+    observer = blockTrackingScripts(['youtube.com']);
 
     const html = document.body.innerHTML;
     expect(html).toContain('Contenu bloqué');
@@ -48,7 +48,7 @@ describe('blocked-content placeholder translations (#39)', () => {
     setBlockingTranslationFunction(null);
 
     addBlockableIframe();
-    observer = blockTrackingScripts(['youtube']);
+    observer = blockTrackingScripts(['youtube.com']);
 
     const html = document.body.innerHTML;
     expect(html).toContain('Content Blocked');

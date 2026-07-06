@@ -18,7 +18,7 @@ describe('content unblocking after consent', () => {
     iframe.src = YT;
     document.body.appendChild(iframe);
 
-    const observer = blockTrackingScripts(['youtube']);
+    const observer = blockTrackingScripts(['youtube.com']);
 
     // Sanity: iframe is blocked and wrapped
     expect(iframe.getAttribute('data-cookie-blocked')).toBe('true');
@@ -49,7 +49,7 @@ describe('content unblocking after consent', () => {
 
   test('newly added iframe after consent is not blocked', () => {
     // Start with active blocker (simulating earlier init), then consent
-    const observer = blockTrackingScripts(['youtube']);
+    const observer = blockTrackingScripts(['youtube.com']);
     setBlockingEnabled(false);
     observer.disconnect();
     unblockPreviouslyBlockedContent([]);

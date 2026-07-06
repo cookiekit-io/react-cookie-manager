@@ -6,7 +6,7 @@ describe('content-blocker', () => {
     iframe.src = 'https://www.youtube.com/embed/abc123';
     document.body.appendChild(iframe);
 
-    const observer = blockTrackingScripts(['youtube']);
+    const observer = blockTrackingScripts(['youtube.com']);
 
     // The iframe should now be wrapped and modified
     const wrappers = document.querySelectorAll('div');

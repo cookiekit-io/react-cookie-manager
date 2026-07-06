@@ -332,7 +332,7 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
         cookieBlockingManager.current.initialize(blockedHosts, blockedKeywords, tFunction);
 
         // Proactively restore any previously blocked iframes that are now permitted
-        unblockPreviouslyBlockedContent(blockedKeywords);
+        unblockPreviouslyBlockedContent(blockedHosts);
       } else {
         // No blocking necessary: disable to avoid races and restore content
         setBlockingEnabled(false);
@@ -474,7 +474,7 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
         }
         cookieBlockingManager.current.initialize(blockedHosts, blockedKeywords, tFunction);
         // Ensure we restore any content that is now permitted
-        unblockPreviouslyBlockedContent(blockedKeywords);
+        unblockPreviouslyBlockedContent(blockedHosts);
       } else {
         setBlockingEnabled(false);
         if (cookieBlockingManager.current) {

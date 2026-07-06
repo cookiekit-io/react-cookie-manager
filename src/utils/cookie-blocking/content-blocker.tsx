@@ -206,12 +206,33 @@ export const createContentPlaceholder = (
 };
 
 /**
- * Blocks tracking scripts and iframes based on keywords
- * @param trackingKeywords Array of keywords to block
+ * Checks whether a URL's hostname matches (or is a subdomain of) any of the given blocked hosts.
+ * List entries may carry a path (e.g. "google.com/pagead/") so only the host portion is compared.
+ * @param rawSrc The URL to check
+ * @param blockedHosts Array of hosts to match against
+ * @returns true if the URL's hostname matches one of the blocked hosts
+ */
+const hostMatches = (rawSrc: string, blockedHosts: string[]): boolean => {
+  let hostname: string;
+  try {
+    hostname = new URL(rawSrc, window.location.href).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+
+  return blockedHosts.some((entry) => {
+    const host = entry.toLowerCase().split("/")[0].replace(/^\.+/, "");
+    return hostname === host || hostname.endsWith(`.${host}`);
+  });
+};
+
+/**
+ * Blocks tracking scripts and iframes based on hostname
+ * @param blockedHosts Array of hosts to block
  * @returns MutationObserver that watches for new elements
  */
 export const blockTrackingScripts = (
-  trackingKeywords: string[]
+  blockedHosts: string[]
 ): MutationObserver => {
   if (!blockingEnabled) {
     // No-op observer to keep call sites simple
@@ -221,7 +242,7 @@ export const blockTrackingScripts = (
   document.querySelectorAll("script").forEach((script) => {
     if (
       (script as HTMLScriptElement).src &&
-      trackingKeywords.some((keyword) => (script as HTMLScriptElement).src.includes(keyword))
+      hostMatches((script as HTMLScriptElement).src, blockedHosts)
     ) {
       script.remove();
     }
@@ -234,7 +255,7 @@ export const blockTrackingScripts = (
       blockingEnabled &&
       el.src &&
       el.src !== "about:blank" &&
-      trackingKeywords.some((keyword) => el.src.includes(keyword))
+      hostMatches(el.src, blockedHosts)
     ) {
       createContentPlaceholder(el, el.src);
     }
@@ -247,11 +268,7 @@ export const blockTrackingScripts = (
         // Handle script tags
         if (node instanceof HTMLElement && node.tagName === "SCRIPT") {
           const src = node.getAttribute("src");
-          if (
-            blockingEnabled &&
-            src &&
-            trackingKeywords.some((keyword) => src.includes(keyword))
-          ) {
+          if (blockingEnabled && src && hostMatches(src, blockedHosts)) {
             node.remove();
           }
         }
@@ -263,7 +280,7 @@ export const blockTrackingScripts = (
             blockingEnabled &&
             src &&
             src !== "about:blank" &&
-            trackingKeywords.some((keyword) => src.includes(keyword))
+            hostMatches(src, blockedHosts)
           ) {
             createContentPlaceholder(node as HTMLIFrameElement, src);
           }
@@ -372,11 +389,11 @@ export const ensurePlaceholdersVisible = (): void => {
 };
 
 /**
- * Restores previously blocked iframes whose original src no longer matches current blocked keywords.
- * @param currentBlockedKeywords The keywords that should remain blocked. Others will be restored.
+ * Restores previously blocked iframes whose original src no longer matches a currently blocked host.
+ * @param currentBlockedHosts The hosts that should remain blocked. Others will be restored.
  */
 export const unblockPreviouslyBlockedContent = (
-  currentBlockedKeywords: string[]
+  currentBlockedHosts: string[]
 ): void => {
   // 1) Primary path: restore any iframes flagged as blocked
   const blockedIframes = document.querySelectorAll(
@@ -388,9 +405,7 @@ export const unblockPreviouslyBlockedContent = (
     const originalSrc = iframe.getAttribute("data-original-src");
     if (!originalSrc) return;
 
-    const stillBlocked = currentBlockedKeywords.some((kw) =>
-      originalSrc.includes(kw)
-    );
+    const stillBlocked = hostMatches(originalSrc, currentBlockedHosts);
 
     if (!stillBlocked) {
       // Restore src and attributes
@@ -438,9 +453,7 @@ export const unblockPreviouslyBlockedContent = (
 
     if (!originalSrc) return;
 
-    const stillBlocked = currentBlockedKeywords.some((kw) =>
-      originalSrc.includes(kw)
-    );
+    const stillBlocked = hostMatches(originalSrc, currentBlockedHosts);
     if (stillBlocked) return;
 
     if (iframe) {
