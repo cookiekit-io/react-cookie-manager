@@ -514,9 +514,15 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
 
   const handleCancelManage = () => {
     setShowManageConsent(false);
-    if (enableFloatingButton && detailedConsent) {
-      setIsFloatingButtonVisible(true);
+    if (detailedConsent) {
+      // User already made a consent decision, so cancelling manage should
+      // just close the modal, not re-open the initial consent banner.
+      if (enableFloatingButton) {
+        setIsFloatingButtonVisible(true);
+      }
     } else {
+      // No decision yet, so manage was opened from the first-run banner.
+      // Cancelling should bring the banner back so the user still has to choose.
       setIsVisible(true);
     }
   };
