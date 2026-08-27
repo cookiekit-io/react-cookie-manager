@@ -1,42 +1,204 @@
 #root {
-  max-width: 1280px;
+  width: 100%;
+}
+
+.playground {
+  box-sizing: border-box;
+  width: min(960px, calc(100% - 2rem));
   margin: 0 auto;
-  padding: 2rem;
+  padding: 3rem 0 6rem;
+  color: #17211c;
+}
+
+.playground-hero {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 0 4.5rem;
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.cookie-hero {
+  margin-bottom: 0.75rem;
+  font-size: clamp(7rem, 20vw, 12rem);
+  line-height: 1;
+  filter: drop-shadow(0 1.25rem 1.5rem rgba(61, 76, 68, 0.14));
+  transform: rotate(-7deg);
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+.eyebrow {
+  margin: 0 0 0.75rem;
+  color: #397158;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.playground h1,
+.playground h2,
+.playground p {
+  margin-top: 0;
+}
+
+.playground h1 {
+  margin-bottom: 1rem;
+  font-size: clamp(2.75rem, 8vw, 5.25rem);
+  line-height: 0.96;
+  letter-spacing: -0.06em;
+}
+
+.hero-copy {
+  max-width: 580px;
+  margin-right: auto;
+  margin-bottom: 1.5rem;
+  margin-left: auto;
+  color: #5e6c65;
+  font-size: 1.08rem;
+  line-height: 1.65;
+}
+
+.project-links {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.project-links a {
+  color: #275c44;
+  font-weight: 750;
+}
+
+.playground-panel,
+.video-demo {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(320px, 1.1fr);
+  gap: 3rem;
+  align-items: center;
+  padding: clamp(1.5rem, 5vw, 3rem);
+  border: 1px solid #d8e2dc;
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 1.5rem 4rem rgba(40, 65, 52, 0.08);
+}
+
+.playground-panel {
+  margin-bottom: 1.25rem;
+}
+
+.panel-copy h2 {
+  margin-bottom: 0.9rem;
+  font-size: clamp(1.65rem, 4vw, 2.5rem);
+  line-height: 1.06;
+  letter-spacing: -0.04em;
+}
+
+.panel-copy > p:last-child {
+  margin-bottom: 0;
+  color: #64736b;
+  line-height: 1.65;
+}
+
+.theme-controls {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.theme-controls label {
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.theme-controls select,
+.theme-controls button {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 3.25rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  font: inherit;
+}
+
+.theme-controls select {
+  overflow: hidden;
+  border: 1px solid #cbd8d1;
+  color: #17211c;
+  background: #ffffff;
+  text-overflow: ellipsis;
+}
+
+.theme-controls code {
+  width: fit-content;
+  padding: 0.42rem 0.65rem;
+  border-radius: 0.45rem;
+  color: #24533e;
+  background: #eaf2ed;
+  font-size: 0.78rem;
+}
+
+.theme-controls button {
+  border: 1px solid #265f46;
+  color: #ffffff;
+  background: #265f46;
+  font-weight: 750;
+  cursor: pointer;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.theme-controls button:hover {
+  background: #1c4b36;
+  transform: translateY(-1px);
+}
+
+.theme-controls button:focus-visible,
+.theme-controls select:focus-visible,
+.project-links a:focus-visible {
+  outline: 3px solid rgba(49, 112, 82, 0.28);
+  outline-offset: 3px;
+}
+
+.consent-status {
+  margin: 0;
+  color: #718078;
+  font-size: 0.8rem;
+}
+
+.consent-status strong {
+  color: #304a3e;
+}
+
+.video-demo {
+  grid-template-columns: minmax(240px, 0.72fr) minmax(0, 1.28fr);
+}
+
+.video-container {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 1rem;
+  background: #17211c;
+  box-shadow: 0 0.8rem 2rem rgba(23, 33, 28, 0.15);
+}
+
+.video-container iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+@media (max-width: 760px) {
+  .playground {
+    padding-top: 1.5rem;
   }
-  to {
-    transform: rotate(360deg);
+
+  .playground-hero {
+    padding-bottom: 3rem;
   }
-}
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+  .playground-panel,
+  .video-demo {
+    grid-template-columns: 1fr;
+    gap: 2rem;
   }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
 }

@@ -2,6 +2,8 @@
 
 Privacy-first, flexible cookie consent for React. Automatically block trackers, manage granular consent, and provide a beautiful UX in a few lines of code.
 
+**[Try the live playground →](https://hypershiphq.github.io/react-cookie-manager/)**
+
 [![npm version](https://img.shields.io/npm/v/react-cookie-manager.svg)](https://www.npmjs.com/package/react-cookie-manager)
 [![npm downloads](https://img.shields.io/npm/dm/react-cookie-manager.svg)](https://www.npmjs.com/package/react-cookie-manager)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -53,6 +55,7 @@ Styles are automatically injected; no manual CSS import is required.
 - [Next.js Usage](#nextjs-usage)
 - [Full Usage](#full-usage)
 - [Advanced Usage with Hook](#advanced-usage-with-hook)
+- [Built-in Themes](#built-in-themes)
 - [Floating Cookie Button](#floating-cookie-button)
 - [Props](#props)
 - [CSS Customization](#css-customization)
@@ -328,6 +331,51 @@ function CookieSettings() {
 }
 ```
 
+## Built-in Themes
+
+React Cookie Manager includes twelve complete visual presets. A preset applies to
+the banner, popup, modal, preferences view, toggles, and floating settings
+button—including colors, typography, radius, borders, shadows, and focus states.
+
+```jsx
+<CookieManager theme="midnight">
+  <App />
+</CookieManager>
+```
+
+Available themes:
+
+| Theme | Character |
+| --- | --- |
+| `light` | Clean neutral default |
+| `dark` | Crisp near-black interface |
+| `minimal` | Monochrome, square, and monospace |
+| `soft` | Rounded lavender surfaces |
+| `midnight` | Deep navy glass with cyan accents |
+| `forest` | Natural greens with clean humanist typography |
+| `ocean` | Airy coastal blues |
+| `sunset` | Warm cream with coral accents |
+| `rose` | Polished blush and berry tones |
+| `sand` | Quiet, warm earth tones |
+| `terminal` | Dark developer styling with green signals |
+| `contrast` | Bold black and yellow high contrast |
+
+The names and display metadata are exported for theme pickers and documentation:
+
+```tsx
+import {
+  cookieThemeNames,
+  cookieThemePresets,
+  type CookieTheme,
+} from "react-cookie-manager";
+```
+
+To browse every preset locally, run the Vite playground and choose a theme
+from the dropdown on its single-page preview.
+The gallery provides real previews, a live component preview, and copyable prop
+snippets. Existing `classNames` overrides continue to take precedence when you
+need finer control.
+
 ## Floating Cookie Button
 
 The floating cookie button provides a persistent, accessible way for users to manage their cookie preferences after they've made their initial choice. It appears as a small, animated cookie icon in the bottom-left corner of the screen.
@@ -337,7 +385,7 @@ The floating cookie button provides a persistent, accessible way for users to ma
 ```jsx
 <CookieManager
   enableFloatingButton={true}
-  theme="light" // or "dark"
+  theme="midnight"
   // ... other props
 >
   <YourApp />
@@ -347,7 +395,7 @@ The floating cookie button provides a persistent, accessible way for users to ma
 ### Features
 
 - 🎯 Automatically appears after initial consent
-- 🎨 Matches your theme (light/dark mode)
+- 🎨 Matches any built-in theme preset
 - 🔄 Smooth animations and hover effects
 - ❌ Dismissible with a close button
 - 📱 Responsive and mobile-friendly
@@ -383,10 +431,7 @@ The floating button automatically adapts to your chosen theme:
 </CookieManager>
 ```
 
-The button inherits your color scheme:
-
-- Light theme: White background with gray text
-- Dark theme: Black background with light gray text
+The button inherits the preset's surface, border, shadow, text, and focus styles.
 
 ### Accessibility
 
@@ -413,7 +458,7 @@ These are the props for the `CookieManager` component (the main component you sh
 | `cookieKey`                | string                                   | 'cookie-consent' | Name of the cookie to store consent       |
 | `expirationDays`           | number                                   | 365              | Days until consent expires                 |
 | `displayType`              | 'banner' \| 'popup' \| 'modal'           | 'popup'          | How the consent UI is displayed           |
-| `theme`                    | 'light' \| 'dark'                        | 'light'          | Color theme                               |
+| `theme`                    | CookieTheme                              | 'light'          | Built-in visual preset selected by its exported theme name |
 | `disableAutomaticBlocking` | boolean                                  | false            | Disable automatic tracking prevention     |
 | `blockedDomains`           | string[]                                 | []               | Additional domains/hosts to block         |
 | `googleConsentMode`        | boolean \| GoogleConsentModeOptions      | -                | Enable Google Consent Mode v2 (see section above) |

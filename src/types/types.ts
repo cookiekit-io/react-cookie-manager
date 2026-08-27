@@ -1,3 +1,5 @@
+import type { CookieTheme } from "../utils/themes";
+
 export interface CookieConsenterClassNames {
   acceptButton?: string;
   declineButton?: string;
@@ -262,10 +264,10 @@ export interface CookieConsenterProps {
   position?: "top" | "bottom";
 
   /**
-   * Theme of the banner
+   * Built-in visual theme for every consent surface.
    * @default 'light'
    */
-  theme?: "light" | "dark";
+  theme?: CookieTheme;
 
   /**
    * Custom class names for the cookie consent UI
