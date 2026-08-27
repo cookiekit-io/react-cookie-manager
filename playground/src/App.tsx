@@ -33,10 +33,6 @@ function App({ activeTheme, onSelectTheme }: AppProps) {
         </div>
         <p className="eyebrow">Playground</p>
         <h1>react-cookie-manager</h1>
-        <p className="hero-copy">
-          Preview a built-in theme and see cookie-aware YouTube blocking on one
-          simple page.
-        </p>
         <nav className="project-links" aria-label="Project links">
           <a
             href="https://github.com/hypershiphq/react-cookie-manager"

@@ -47,16 +47,6 @@
   letter-spacing: -0.06em;
 }
 
-.hero-copy {
-  max-width: 580px;
-  margin-right: auto;
-  margin-bottom: 1.5rem;
-  margin-left: auto;
-  color: #5e6c65;
-  font-size: 1.08rem;
-  line-height: 1.65;
-}
-
 .project-links {
   display: flex;
   justify-content: center;
