@@ -4,6 +4,7 @@ export default {
       prefix: ".cookie-manager", // We need to scope all our styles with our own class
       transform(prefix, selector) {
         if (selector.startsWith("html")) return prefix;
+        if (selector.startsWith(prefix)) return selector;
         return `${prefix} ${selector}`;
       },
     },

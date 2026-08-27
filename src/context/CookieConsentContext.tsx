@@ -36,6 +36,7 @@ import {
   updateGoogleConsent,
   type GoogleConsentModeOptions,
 } from "../utils/google-consent-mode";
+import type { CookieTheme } from "../utils/themes";
 
 interface CookieConsentContextValue {
   hasConsent: boolean | null;
@@ -116,7 +117,7 @@ export interface CookieManagerProps
    */
   translationI18NextPrefix?: string;
   enableFloatingButton?: boolean;
-  theme?: "light" | "dark";
+  theme?: CookieTheme;
 }
 
 const createConsentStatus = (consented: boolean) => ({
@@ -584,14 +585,10 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
       )}
       {showManageConsent && typeof document !== "undefined" &&
         createPortal(
-          <div className="cookie-manager">
-            <div className="fixed inset-0 z-[99999] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="cookie-manager" data-cookie-theme={theme}>
+            <div className="rcm-overlay fixed inset-0 z-[99999] flex items-center justify-center p-4">
               <div
-                className={`w-full max-w-lg rounded-xl p-6 ${
-                  theme === "light"
-                    ? "bg-white/95 ring-1 ring-black/10"
-                    : "bg-black/95 ring-1 ring-white/10"
-                }`}
+                className="rcm-surface w-full max-w-lg p-6"
               >
                 <React.Suspense fallback={null}>
                   <ManageConsent
@@ -616,7 +613,7 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
         !showManageConsent &&
         typeof document !== "undefined" &&
         createPortal(
-          <div className="cookie-manager">
+          <div className="cookie-manager" data-cookie-theme={theme}>
             <FloatingCookieButton
               theme={theme}
               onClick={() => {

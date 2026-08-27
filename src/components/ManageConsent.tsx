@@ -8,6 +8,7 @@ import {
 import { TFunction } from "../utils/translations";
 import { resolveCategories, consentIdsFor } from "../utils/categories";
 import { cn } from "../utils/cn";
+import type { CookieTheme } from "../utils/themes";
 
 // Stable empty default so a missing prop doesn't produce a new object identity
 // on every render (which previously caused the resync effect below to fire
@@ -15,7 +16,7 @@ import { cn } from "../utils/cn";
 const EMPTY_PREFERENCES: CookieCategories = {} as CookieCategories;
 
 interface ManageConsentProps {
-  theme?: "light" | "dark";
+  theme?: CookieTheme;
   tFunction: TFunction;
   onSave: (categories: CookieCategories) => void;
   onCancel?: () => void;
@@ -108,10 +109,7 @@ export const ManageConsent: React.FC<ManageConsentProps> = ({
         className={
           classNames?.manageCookieStatusText
             ? cn(classNames.manageCookieStatusText)
-            : cn(
-                "text-xs mt-1 text-left",
-                theme === "light" ? "text-gray-500" : "text-gray-500"
-              )
+            : cn("rcm-subtle text-xs mt-1 text-left")
         }
       >
         {tFunction("manageCookiesStatus", {
@@ -137,10 +135,7 @@ export const ManageConsent: React.FC<ManageConsentProps> = ({
           className={
             classNames?.manageCookieTitle
               ? cn(classNames.manageCookieTitle)
-              : cn(
-                  "text-sm font-semibold mb-2",
-                  theme === "light" ? "text-gray-900" : "text-white"
-                )
+              : cn("rcm-title text-sm font-semibold mb-2")
           }
         >
           {tFunction("manageTitle")}
@@ -149,10 +144,7 @@ export const ManageConsent: React.FC<ManageConsentProps> = ({
           className={
             classNames?.manageCookieMessage
               ? cn(classNames.manageCookieMessage)
-              : cn(
-                  "text-xs",
-                  theme === "light" ? "text-gray-700" : "text-gray-200"
-                )
+              : cn("rcm-message text-xs")
           }
         >
           {tFunction("manageMessage")}
@@ -173,10 +165,7 @@ export const ManageConsent: React.FC<ManageConsentProps> = ({
               className={
                 classNames?.manageCookieCategoryTitle
                   ? cn(classNames.manageCookieCategoryTitle)
-                  : cn(
-                      "text-xs font-medium text-left",
-                      theme === "light" ? "text-gray-900" : "text-white"
-                    )
+                  : cn("rcm-title text-xs font-medium text-left")
               }
             >
               {tFunction("manageEssentialTitle")}
@@ -185,10 +174,7 @@ export const ManageConsent: React.FC<ManageConsentProps> = ({
               className={
                 classNames?.manageCookieCategorySubtitle
                   ? cn(classNames.manageCookieCategorySubtitle)
-                  : cn(
-                      "text-xs text-left",
-                      theme === "light" ? "text-gray-600" : "text-gray-400"
-                    )
+                  : cn("rcm-message text-xs text-left")
               }
             >
               {tFunction("manageEssentialSubtitle")}
@@ -197,21 +183,14 @@ export const ManageConsent: React.FC<ManageConsentProps> = ({
               className={
                 classNames?.manageCookieStatusText
                   ? cn(classNames.manageCookieStatusText)
-                  : cn(
-                      "text-xs mt-1 text-left",
-                      theme === "light" ? "text-gray-500" : "text-gray-500"
-                    )
+                  : cn("rcm-subtle text-xs mt-1 text-left")
               }
             >
               {tFunction("manageEssentialStatus")}
             </p>
           </div>
           <div
-            className={`px-3 py-1 text-xs text-center font-medium rounded-full ${
-              theme === "light"
-                ? "bg-gray-200 text-gray-600"
-                : "bg-gray-800 text-gray-300"
-            }`}
+            className="rcm-badge px-3 py-1 text-xs text-center font-medium"
           >
             {tFunction("manageEssentialStatusButtonText")}
           </div>
@@ -232,10 +211,7 @@ export const ManageConsent: React.FC<ManageConsentProps> = ({
                 className={
                   classNames?.manageCookieCategoryTitle
                     ? cn(classNames.manageCookieCategoryTitle)
-                    : cn(
-                        "text-xs font-medium text-left",
-                        theme === "light" ? "text-gray-900" : "text-white"
-                      )
+                    : cn("rcm-title text-xs font-medium text-left")
                 }
               >
                 {category.title}
@@ -245,10 +221,7 @@ export const ManageConsent: React.FC<ManageConsentProps> = ({
                   className={
                     classNames?.manageCookieCategorySubtitle
                       ? cn(classNames.manageCookieCategorySubtitle)
-                      : cn(
-                          "text-xs text-left",
-                          theme === "light" ? "text-gray-600" : "text-gray-400"
-                        )
+                      : cn("rcm-message text-xs text-left")
                   }
                 >
                   {category.description}
@@ -258,11 +231,7 @@ export const ManageConsent: React.FC<ManageConsentProps> = ({
             </div>
             {category.essential ? (
               <div
-                className={`px-3 py-1 text-xs text-center font-medium rounded-full ${
-                  theme === "light"
-                    ? "bg-gray-200 text-gray-600"
-                    : "bg-gray-800 text-gray-300"
-                }`}
+                className="rcm-badge px-3 py-1 text-xs text-center font-medium"
               >
                 {tFunction("manageEssentialStatusButtonText")}
               </div>
@@ -282,12 +251,7 @@ export const ManageConsent: React.FC<ManageConsentProps> = ({
                           consent[category.id] &&
                             classNames.manageCookieToggleChecked
                         )
-                      : cn(`w-11 h-6 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-500
-                ${
-                  theme === "light"
-                    ? "bg-gray-200 peer-checked:bg-blue-500"
-                    : "bg-gray-700 peer-checked:bg-blue-500"
-                }
+                      : cn(`rcm-toggle w-11 h-6 rounded-full peer
                 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5
                 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5
                 after:transition-all`)
@@ -307,11 +271,7 @@ export const ManageConsent: React.FC<ManageConsentProps> = ({
               classNames?.manageCancelButton
                 ? cn(classNames.manageCancelButton)
                 : cn(
-                    `w-full sm:w-auto px-3 py-2 sm:py-1.5 text-xs font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 hover:scale-105 ${
-                      theme === "light"
-                        ? "bg-gray-200 hover:bg-gray-300 text-gray-800"
-                        : "bg-gray-800 hover:bg-gray-700 text-gray-300"
-                    }`
+                    "rcm-button-secondary w-full sm:w-auto px-3 py-2 sm:py-1.5 text-xs font-medium focus:outline-none transition-all duration-200 hover:scale-105"
                   )
             }
           >
@@ -323,7 +283,7 @@ export const ManageConsent: React.FC<ManageConsentProps> = ({
           className={
             classNames?.manageSaveButton
               ? cn(classNames.manageSaveButton)
-              : "w-full sm:w-auto px-3 py-2 sm:py-1.5 text-xs font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 hover:scale-105"
+              : "rcm-button-primary w-full sm:w-auto px-3 py-2 sm:py-1.5 text-xs font-medium focus:outline-none transition-all duration-200 hover:scale-105"
           }
         >
           {tFunction("manageSaveButtonText")}

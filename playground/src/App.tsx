@@ -1,81 +1,109 @@
-import { useCookieConsent } from "react-cookie-manager";
+import {
+  cookieThemePresets,
+  useCookieConsent,
+  type CookieTheme,
+} from "react-cookie-manager";
+import { useEffect, useState, type ChangeEvent } from "react";
 import "./App.css";
-import reactLogo from "./assets/react.svg";
-import { useState, useEffect } from "react";
 
-function App() {
+interface AppProps {
+  activeTheme: CookieTheme;
+  onSelectTheme: (theme: CookieTheme) => void;
+}
+
+function App({ activeTheme, onSelectTheme }: AppProps) {
   const { showConsentBanner, detailedConsent } = useCookieConsent();
-  const [consentStatus, setConsentStatus] = useState<string>("Checking...");
+  const [consentStatus, setConsentStatus] = useState("Not set");
 
-  // Track consent status changes
   useEffect(() => {
-    if (detailedConsent) {
-      const status = detailedConsent.Advertising.consented
-        ? "Accepted"
-        : "Not Accepted";
-      setConsentStatus(status);
-    } else {
-      setConsentStatus("Not Set");
-    }
+    setConsentStatus(
+      detailedConsent?.Advertising.consented ? "Accepted" : "Not accepted",
+    );
   }, [detailedConsent]);
 
+  const selectTheme = (event: ChangeEvent<HTMLSelectElement>) => {
+    onSelectTheme(event.target.value as CookieTheme);
+  };
+
   return (
-    <>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          gap: "2rem",
-        }}
-      >
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-        <span style={{ fontSize: "6rem" }}>🍪</span>
-      </div>
-      <h1>React Cookie Manager Playground</h1>
+    <main className="playground">
+      <header className="playground-hero">
+        <div className="cookie-hero" aria-hidden="true">
+          🍪
+        </div>
+        <p className="eyebrow">Playground</p>
+        <h1>react-cookie-manager</h1>
+        <nav className="project-links" aria-label="Project links">
+          <a
+            href="https://github.com/hypershiphq/react-cookie-manager"
+            target="_blank"
+            rel="noreferrer"
+          >
+            GitHub ↗
+          </a>
+          <a
+            href="https://www.npmjs.com/package/react-cookie-manager"
+            target="_blank"
+            rel="noreferrer"
+          >
+            npm ↗
+          </a>
+        </nav>
+      </header>
 
-      <div className="card">
-        <h2>Cookie Consent Status</h2>
-        <p>
-          Marketing/Advertising Cookies: <strong>{consentStatus}</strong>
-        </p>
-        <button onClick={showConsentBanner}>Show Cookie Consent Banner</button>
-      </div>
+      <section className="playground-panel" aria-labelledby="theme-heading">
+        <div className="panel-copy">
+          <p className="eyebrow">Theme preview</p>
+          <h2 id="theme-heading">Choose the look and feel</h2>
+          <p>
+            The selected preset applies to the banner, settings modal, toggles,
+            and floating cookie button.
+          </p>
+        </div>
 
-      <div className="card">
-        <h2>YouTube Video Embed Test</h2>
-        <p>
-          This YouTube video is embedded directly to observe what happens when
-          cookies haven't been accepted yet.
-        </p>
+        <div className="theme-controls">
+          <label htmlFor="theme-select">Theme</label>
+          <select
+            id="theme-select"
+            value={activeTheme}
+            onChange={selectTheme}
+          >
+            {cookieThemePresets.map((preset) => (
+              <option key={preset.name} value={preset.name}>
+                {preset.label} — {preset.description}
+              </option>
+            ))}
+          </select>
+          <code>{`theme="${activeTheme}"`}</code>
+          <button type="button" onClick={showConsentBanner}>
+            Preview cookie banner
+          </button>
+          <p className="consent-status">
+            Advertising consent: <strong>{consentStatus}</strong>
+          </p>
+        </div>
+      </section>
 
-        {/* Direct YouTube embed without conditional rendering */}
+      <section className="video-demo" aria-labelledby="video-heading">
+        <div className="panel-copy">
+          <p className="eyebrow">Cookie-aware embeds</p>
+          <h2 id="video-heading">One YouTube video, blocked until consent</h2>
+          <p>
+            Decline advertising cookies to see the privacy placeholder. Accept
+            them and the same embed is restored automatically.
+          </p>
+        </div>
+
         <div className="video-container">
           <iframe
-            width="560"
-            height="315"
             src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0"
-            title="YouTube video player"
-            frameBorder="0"
+            title="YouTube cookie blocking demonstration"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
-          ></iframe>
+          />
         </div>
-        <div className="video-container">
-          <iframe
-            width="800"
-            height="315"
-            src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0"
-            title="YouTube video player"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          ></iframe>
-        </div>
-      </div>
-    </>
+      </section>
+    </main>
   );
 }
 

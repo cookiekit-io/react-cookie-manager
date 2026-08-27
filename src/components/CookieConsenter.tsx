@@ -68,9 +68,9 @@ const MobileModal: React.FC<
       ? classNames?.popupContent
       : classNames?.bannerContent;
   return (
-    <div className="cookie-manager">
+    <div className="cookie-manager" data-cookie-theme={theme ?? "light"}>
       {displayType === "modal" && (
-        <div className="fixed inset-0 z-[99999] bg-black/40 backdrop-blur-sm" />
+        <div className="rcm-overlay fixed inset-0 z-[99999]" />
       )}
       <div
         className={cn(
@@ -85,11 +85,7 @@ const MobileModal: React.FC<
       >
         <div
           className={cn(
-            "p-4 mx-auto max-w-[calc(100vw-32px)]",
-            theme === "light"
-              ? "bg-white/95 ring-1 ring-black/10"
-              : "bg-black/95 ring-1 ring-white/10",
-            "rounded-2xl backdrop-blur-sm backdrop-saturate-150",
+            "rcm-surface p-4 mx-auto max-w-[calc(100vw-32px)]",
             mobileContentOverride && cn(mobileContentOverride)
           )}
         >
@@ -110,8 +106,7 @@ const MobileModal: React.FC<
               {title && (
                 <h3
                   className={cn(
-                    classNames?.bannerTitle || "font-semibold my-0",
-                    theme === "light" ? "text-gray-900" : "text-white"
+                    classNames?.bannerTitle || "rcm-title font-semibold my-0"
                   )}
                 >
                   {title}
@@ -119,8 +114,7 @@ const MobileModal: React.FC<
               )}
               <p
                 className={cn(
-                  classNames?.bannerMessage || "text-sm",
-                  theme === "light" ? "text-gray-700" : "text-gray-200"
+                  classNames?.bannerMessage || "rcm-message text-sm"
                 )}
               >
                 {tFunction("message")}
@@ -132,7 +126,7 @@ const MobileModal: React.FC<
                     classNames?.acceptButton
                       ? cn(classNames.acceptButton)
                       : cn(
-                          "w-full px-3 py-2.5 text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 focus-visible:outline-none focus:outline-none focus-visible:outline-transparent focus:outline-transparent"
+                          "rcm-button-primary w-full px-3 py-2.5 text-sm font-medium focus-visible:outline-none focus:outline-none"
                         )
                   }
                 >
@@ -144,10 +138,7 @@ const MobileModal: React.FC<
                     classNames?.declineButton
                       ? cn(classNames.declineButton)
                       : cn(
-                          "w-full px-3 py-2.5 text-sm font-medium rounded-lg focus-visible:outline-none focus:outline-none focus-visible:outline-transparent focus:outline-transparent",
-                          theme === "light"
-                            ? "bg-gray-200 hover:bg-gray-300 text-gray-800"
-                            : "bg-gray-800 hover:bg-gray-700 text-gray-300"
+                          "rcm-button-secondary w-full px-3 py-2.5 text-sm font-medium focus-visible:outline-none focus:outline-none"
                         )
                   }
                 >
@@ -160,7 +151,7 @@ const MobileModal: React.FC<
                       classNames?.manageButton
                         ? cn(classNames.manageButton)
                         : cn(
-                            "w-full px-3 py-2.5 text-sm font-medium bg-transparent text-blue-500 border border-blue-500 rounded-lg hover:text-blue-400 hover:border-blue-400 focus-visible:outline-none focus:outline-none focus-visible:outline-transparent focus:outline-transparent"
+                          "rcm-button-outline w-full px-3 py-2.5 text-sm font-medium focus-visible:outline-none focus:outline-none"
                           )
                     }
                   >
@@ -177,10 +168,7 @@ const MobileModal: React.FC<
                     classNames?.privacyPolicyLink
                       ? cn(classNames.privacyPolicyLink)
                       : cn(
-                          "text-xs text-right",
-                          theme === "light"
-                            ? "text-gray-500 hover:text-gray-700"
-                            : "text-gray-400 hover:text-gray-200"
+                          "rcm-link text-xs text-right"
                         )
                   }
                 >
@@ -318,8 +306,7 @@ const CookieConsenter: React.FC<
   const acceptButtonClasses = classNames?.acceptButton
     ? cn(classNames.acceptButton)
     : cn(
-        "px-3 py-1.5 text-xs font-medium rounded-md",
-        "bg-blue-500 hover:bg-blue-600 text-white",
+        "rcm-button-primary px-3 py-1.5 text-xs font-medium",
         "transition-all duration-200",
         "hover:scale-105 focus-visible:outline-none focus:outline-none",
         "focus-visible:outline-transparent focus:outline-transparent",
@@ -329,10 +316,7 @@ const CookieConsenter: React.FC<
   const declineButtonClasses = classNames?.declineButton
     ? cn(classNames.declineButton)
     : cn(
-        "px-3 py-1.5 text-xs font-medium rounded-md",
-        theme === "light"
-          ? "bg-gray-200 hover:bg-gray-300 text-gray-800"
-          : "bg-gray-800 hover:bg-gray-700 text-gray-300",
+        "rcm-button-secondary px-3 py-1.5 text-xs font-medium",
         "transition-all duration-200",
         "hover:scale-105 focus-visible:outline-none focus:outline-none",
         "focus-visible:outline-transparent focus:outline-transparent",
@@ -342,10 +326,7 @@ const CookieConsenter: React.FC<
   const manageButtonClasses = classNames?.manageButton
     ? cn(classNames.manageButton)
     : cn(
-        "px-3 py-1.5 text-xs font-medium rounded-md",
-        "border border-blue-500 text-blue-500",
-        "bg-transparent",
-        "hover:text-blue-600 hover:border-blue-600",
+        "rcm-button-outline px-3 py-1.5 text-xs font-medium",
         "transition-all duration-200",
         "hover:scale-105 focus-visible:outline-none focus:outline-none",
         "focus-visible:outline-transparent focus:outline-transparent",
@@ -355,20 +336,14 @@ const CookieConsenter: React.FC<
   const privacyLinkClasses = classNames?.privacyPolicyLink
     ? cn(classNames.privacyPolicyLink)
     : cn(
-        "text-xs font-medium",
-        theme === "light"
-          ? "text-gray-500 hover:text-gray-700"
-          : "text-gray-400 hover:text-gray-200",
+        "rcm-link text-xs font-medium",
         "transition-colors duration-200"
       );
 
   const modalBaseClasses = classNames?.modalContainer
     ? cn(classNames.modalContainer)
     : cn(
-        "fixed inset-0 flex items-center justify-center p-4",
-        theme === "light"
-          ? "bg-black/20 backdrop-blur-sm"
-          : "bg-black/40 backdrop-blur-sm",
+        "rcm-overlay fixed inset-0 flex items-center justify-center p-4",
         "transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
         "z-[99999]",
         isExiting ? "opacity-0" : isEntering ? "opacity-0" : "opacity-100"
@@ -377,10 +352,7 @@ const CookieConsenter: React.FC<
   const modalContentClasses = classNames?.modalContent
     ? cn(classNames.modalContent)
     : cn(
-        "w-full max-w-lg rounded-xl p-6",
-        theme === "light"
-          ? "bg-white/95 ring-2 ring-gray-200"
-          : "bg-black/95 ring-1 ring-white/10",
+        "rcm-surface w-full max-w-lg p-6",
         isExiting ? "scale-95" : isEntering ? "scale-95" : "scale-100",
         "transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
       );
@@ -388,25 +360,19 @@ const CookieConsenter: React.FC<
   const modalTitleClasses = classNames?.modalTitle
     ? cn(classNames.modalTitle)
     : cn(
-        "text-lg font-semibold mb-3",
-        theme === "light" ? "text-gray-900" : "text-white"
+        "rcm-title text-lg font-semibold mb-3"
       );
 
   const modalMessageClasses = classNames?.modalMessage
     ? cn(classNames.modalMessage)
     : cn(
-        "text-sm font-medium mb-6",
-        theme === "light" ? "text-gray-700" : "text-gray-200"
+        "rcm-message text-sm font-medium mb-6"
       );
 
   const popupBaseClasses = classNames?.popupContainer
     ? cn(classNames.popupContainer)
     : cn(
-        "fixed bottom-4 left-4 w-80",
-        theme === "light"
-          ? "bg-white/95 ring-1 ring-black/10 shadow-lg"
-          : "bg-black/95 ring-1 ring-white/10",
-        "rounded-lg backdrop-blur-sm backdrop-saturate-150",
+        "rcm-surface fixed bottom-4 left-4 w-80",
         "transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
         "z-[99999] hover:-translate-y-2",
         isExiting
@@ -419,11 +385,7 @@ const CookieConsenter: React.FC<
   const bannerBaseClasses = classNames?.bannerContainer
     ? cn(classNames.bannerContainer)
     : cn(
-        "fixed bottom-4 left-1/2 -translate-x-1/2 w-full md:max-w-2xl",
-        theme === "light"
-          ? "bg-white/95 border border-black/10 shadow-lg"
-          : "bg-black/95 ring-1 ring-white/10",
-        "rounded-lg backdrop-blur-sm backdrop-saturate-150",
+        "rcm-surface fixed bottom-4 left-1/2 -translate-x-1/2 w-full md:max-w-2xl",
         "transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
         "z-[99999] hover:-translate-y-2",
         isExiting
@@ -436,43 +398,37 @@ const CookieConsenter: React.FC<
   const bannerContentClasses = classNames?.bannerContent
     ? cn(classNames.bannerContent)
     : cn(
-        "flex flex-col gap-4 p-4",
-        theme === "light" ? "text-gray-600" : "text-gray-300"
+        "rcm-message flex flex-col gap-4 p-4"
       );
 
   const popupContentClasses = classNames?.popupContent
     ? cn(classNames.popupContent)
     : cn(
-        "flex flex-col items-start gap-4 p-4",
-        theme === "light" ? "text-gray-600" : "text-gray-300"
+        "rcm-message flex flex-col items-start gap-4 p-4"
       );
 
   const bannerTitleClasses = classNames?.bannerTitle
     ? cn(classNames.bannerTitle)
     : cn(
-        "text-sm font-semibold mb-1",
-        theme === "light" ? "text-gray-900" : "text-white"
+        "rcm-title text-sm font-semibold mb-1"
       );
 
   const popupTitleClasses = classNames?.popupTitle
     ? cn(classNames.popupTitle)
     : cn(
-        "text-sm font-semibold mb-2",
-        theme === "light" ? "text-gray-900" : "text-white"
+        "rcm-title text-sm font-semibold mb-2"
       );
 
   const bannerMessageClasses = classNames?.bannerMessage
     ? cn(classNames.bannerMessage)
     : cn(
-        "text-xs sm:text-sm font-medium text-center sm:text-left",
-        theme === "light" ? "text-gray-700" : "text-gray-200"
+        "rcm-message text-xs sm:text-sm font-medium text-center sm:text-left"
       );
 
   const popupMessageClasses = classNames?.popupMessage
     ? cn(classNames.popupMessage)
     : cn(
-        "text-xs font-medium",
-        theme === "light" ? "text-gray-700" : "text-gray-200"
+        "rcm-message text-xs font-medium"
       );
 
   const getBaseClasses = () => {
@@ -657,7 +613,7 @@ const CookieConsenter: React.FC<
   };
 
   const content = (
-    <div className="cookie-manager">
+    <div className="cookie-manager" data-cookie-theme={theme}>
       <div className={getBaseClasses()}>
         {displayType === "modal" ? (
           <div className={getContentClasses()}>

@@ -9,6 +9,12 @@ export type {
   TranslationObject,
 } from "./types/types";
 export {
+  cookieThemeNames,
+  cookieThemePresets,
+  getCookieThemePreset,
+} from "./utils/themes";
+export type { CookieTheme, CookieThemePreset } from "./utils/themes";
+export {
   CookieManager,
   useCookieConsent,
 } from "./context/CookieConsentContext";
