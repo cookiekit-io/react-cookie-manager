@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.11.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            playground/pnpm-lock.yaml
+            playground-next/pnpm-lock.yaml
+
+      - name: Install library dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test library
+        run: pnpm test
+
+      - name: Build library
+        run: pnpm build
+
+      - name: Install Vite playground dependencies
+        working-directory: playground
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint Vite playground
+        working-directory: playground
+        run: pnpm lint
+
+      - name: Build Vite playground
+        working-directory: playground
+        run: pnpm build
+
+      - name: Install Next.js playground dependencies
+        working-directory: playground-next
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Next.js playground
+        working-directory: playground-next
+        run: pnpm build

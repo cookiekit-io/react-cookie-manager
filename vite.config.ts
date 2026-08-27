@@ -1,5 +1,5 @@
 import { defineConfig } from "vite";
-import { resolve } from "path";
+import { resolve } from "node:path";
 import react from "@vitejs/plugin-react";
 import dts from "vite-plugin-dts";
 import cssInjectedByJsPlugin from "vite-plugin-css-injected-by-js";
@@ -22,17 +22,17 @@ export default defineConfig({
   },
   build: {
     lib: {
-      entry: resolve(__dirname, "src/index.ts"),
+      entry: resolve(import.meta.dirname, "src/index.ts"),
       name: "react-cookie-consenter",
       fileName: (format) => `index.${format === "es" ? "js" : "cjs"}`,
       formats: ["es"],
     },
-    rollupOptions: {
+    rolldownOptions: {
       external: ["react", "react/jsx-runtime", "react-dom"],
       output: {
         assetFileNames: "style.css",
         manualChunks: undefined,
-        inlineDynamicImports: true,
+        codeSplitting: false,
         minifyInternalExports: true,
       },
     },
