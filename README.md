@@ -12,6 +12,15 @@ Privacy-first, flexible cookie consent for React. Automatically block trackers, 
 
 ![React Cookie Manager](https://github.com/hypershiphq/react-cookie-manager/blob/main/assets/react-cookie-manager.gif?raw=true)
 
+## Live Demo
+
+**[Open the live React Cookie Manager playground →](https://hypershiphq.github.io/react-cookie-manager/)**
+
+Try the real consent flow before installing anything. Switch between all twelve
+built-in themes, preview the cookie banner and preferences experience, and see
+automatic YouTube embed blocking respond to advertising consent—all on one
+simple page.
+
 ## Feature highlights
 
 - Automatic blocking of common trackers and third-party embeds
@@ -46,6 +55,7 @@ Styles are automatically injected; no manual CSS import is required.
 
 ## Contents
 
+- [Live Demo](#live-demo)
 - [Quick Start](#quick-start)
 - [Features](#features)
 - [Automatically Disable Tracking](#automatically-disable-tracking)
