@@ -22,7 +22,7 @@ export class CookieBlockingManager {
   /**
    * Initializes cookie blocking based on user preferences
    * @param blockedHosts Array of hosts to block
-   * @param blockedKeywords Array of keywords to block in scripts and iframes
+   * @param blockedKeywords Unused for DOM matching (kept for API compatibility)
    * @param tFunction Optional translation function for the blocked-content placeholder
    */
   public initialize(
@@ -33,7 +33,7 @@ export class CookieBlockingManager {
     // Make the translation function available to the placeholder renderer
     setBlockingTranslationFunction(tFunction ?? null);
 
-    // Replace any existing observers/intervals to avoid stale keyword sets
+    // Replace any existing observers/intervals to avoid stale host sets
     if (this.observerRef) {
       this.observerRef.disconnect();
       this.observerRef = null;
@@ -46,11 +46,9 @@ export class CookieBlockingManager {
     // Block network requests
     if (blockedHosts.length > 0) {
       blockTrackingRequests(blockedHosts);
-    }
 
-    // Block scripts and iframes
-    if (blockedKeywords.length > 0) {
-      this.observerRef = blockTrackingScripts(blockedKeywords);
+      // Block scripts and iframes by hostname
+      this.observerRef = blockTrackingScripts(blockedHosts);
 
       // Set up periodic check to ensure placeholders remain visible
       this.startPlaceholderVisibilityCheck();
